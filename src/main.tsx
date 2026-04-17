@@ -1,16 +1,18 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Route, Routes } from 'react-router';
+import App from './App.tsx';
 
-const root = document.getElementById("root")!;
+const root = document.getElementById('root');
+
+if (root === null) throw new Error('Failed to find the root element');
 
 createRoot(root).render(
-  <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-      </Routes>
-    </BrowserRouter>
-  </StrictMode>,
+	<StrictMode>
+		<BrowserRouter>
+			<Routes>
+				<Route path="/" element={<App />} />
+			</Routes>
+		</BrowserRouter>
+	</StrictMode>
 );
