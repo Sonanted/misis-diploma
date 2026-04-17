@@ -7,7 +7,8 @@
 		"dev": "vite",
 		"build": "tsc -b && vite build",
 		"preview": "vite preview",
-		"lint": "biome check --write"
+		"lint": "biome check --changed",
+		"lint:fix": "biome check --changed --fix"
 	},
 	"dependencies": {
 		"react": "^19.2.4",

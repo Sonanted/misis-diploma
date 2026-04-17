@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import App from './App.tsx';
 
-const root = document.getElementById('root') as HTMLElement;
+const root = document.getElementById('root');
+
+if (root === null) throw new Error('Failed to find the root element');
 
 createRoot(root).render(
 	<StrictMode>
