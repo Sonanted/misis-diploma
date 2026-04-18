@@ -2,12 +2,20 @@ import { NavLink } from 'react-router';
 
 const Header = () => {
 	return (
-		<div>
-			<NavLink to="/">Dashboard</NavLink>
-			<NavLink to="/operations">Operations</NavLink>
-			<NavLink to="/payments">Payments</NavLink>
-			<NavLink to="/profile">Profile</NavLink>
-		</div>
+		<nav aria-label="Main navigation">
+			<NavLink to="/" end>
+				Dashboard
+			</NavLink>
+			<NavLink to="/operations" end>
+				Operations
+			</NavLink>
+			<NavLink to="/payments" end>
+				Payments
+			</NavLink>
+			<NavLink to="/profile" end>
+				Profile
+			</NavLink>
+		</nav>
 	);
 };
 
