@@ -3,8 +3,7 @@
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
-		"useIgnoreFile": true,
-		"defaultBranch": "main"
+		"useIgnoreFile": true
 	},
 	"files": {
 		"ignoreUnknown": false
@@ -46,7 +45,22 @@
 		"enabled": true,
 		"actions": {
 			"source": {
-				"organizeImports": "on"
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							["react", "react/**", "react-*", "react-*/**"],
+							":BLANK_LINE:",
+							[":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"],
+							":BLANK_LINE:",
+							[":ALIAS:"],
+							":BLANK_LINE:",
+							[":PATH:"],
+							":BLANK_LINE:",
+							["**/*.css", "**/*.scss", "**/*.module.css", "**/*.module.scss"]
+						]
+					}
+				}
 			}
 		}
 	}
