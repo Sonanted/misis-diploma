@@ -1,15 +1,15 @@
-import { BrowserRouter } from 'react-router';
+import { RouterProvider } from '@tanstack/react-router';
 
-import AppRouter from './AppRouter';
-import Header from './components/Header/Header';
+import { router } from './routes/router';
 
 const App = () => {
-	return (
-		<BrowserRouter>
-			<Header></Header>
-			<AppRouter></AppRouter>
-		</BrowserRouter>
-	);
+	return <RouterProvider router={router} />;
+	// return (
+	// 	<BrowserRouter>
+	// 		<Header></Header>
+	// 		<AppRouter></AppRouter>
+	// 	</BrowserRouter>
+	// );
 };
 
 export default App;

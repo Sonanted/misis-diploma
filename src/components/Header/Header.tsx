@@ -1,21 +1,40 @@
-import { NavLink } from 'react-router';
+import { Link } from '@tanstack/react-router';
+
+import {
+	NavigationMenu,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+} from '@/ui/navigation-menu';
 
 const Header = () => {
 	return (
-		<nav aria-label="Main navigation">
-			<NavLink to="/" end>
-				Dashboard
-			</NavLink>
-			<NavLink to="/operations" end>
-				Operations
-			</NavLink>
-			<NavLink to="/payments" end>
-				Payments
-			</NavLink>
-			<NavLink to="/profile" end>
-				Profile
-			</NavLink>
-		</nav>
+		<NavigationMenu>
+			<NavigationMenuList>
+				<NavigationMenuItem>
+					<NavigationMenuLink>
+						<Link to="/">Dashboard</Link>
+					</NavigationMenuLink>
+				</NavigationMenuItem>
+				<NavigationMenuItem>
+					<NavigationMenuLink>
+						<Link to="/operations">Operations</Link>
+					</NavigationMenuLink>
+				</NavigationMenuItem>
+				<NavigationMenuItem>
+					<NavigationMenuLink>
+						<Link to="/payments">Payments</Link>
+					</NavigationMenuLink>
+				</NavigationMenuItem>
+			</NavigationMenuList>
+			<NavigationMenuList>
+				<NavigationMenuItem>
+					<NavigationMenuLink>
+						<Link to="/profile">Profile</Link>
+					</NavigationMenuLink>
+				</NavigationMenuItem>
+			</NavigationMenuList>
+		</NavigationMenu>
 	);
 };
 
