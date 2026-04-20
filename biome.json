@@ -48,16 +48,19 @@
 				"organizeImports": {
 					"level": "on",
 					"options": {
+						"identifierOrder": "lexicographic",
 						"groups": [
+							[":NODE:"],
+							":BLANK_LINE:",
 							["react", "react/**", "react-*", "react-*/**"],
 							":BLANK_LINE:",
 							[":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"],
 							":BLANK_LINE:",
 							[":ALIAS:"],
 							":BLANK_LINE:",
-							[":PATH:"],
+							["../**/*"],
 							":BLANK_LINE:",
-							["**/*.css", "**/*.scss", "**/*.module.css", "**/*.module.scss"]
+							["./**/*"]
 						]
 					}
 				}
