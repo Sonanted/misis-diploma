@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Link } from '@tanstack/react-router';
 
 import {
@@ -13,7 +15,7 @@ export function NavMain({
 	items: {
 		title: string;
 		url: string;
-		icon: React.ReactNode;
+		icon: ReactNode;
 		isActive?: boolean;
 		items?: {
 			title: string;

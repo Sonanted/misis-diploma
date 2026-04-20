@@ -1,3 +1,5 @@
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
+
 import {
 	SidebarGroup,
 	SidebarGroupContent,
@@ -13,9 +15,9 @@ export function NavSecondary({
 	items: {
 		title: string;
 		url: string;
-		icon: React.ReactNode;
+		icon: ReactNode;
 	}[];
-} & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+} & ComponentPropsWithoutRef<typeof SidebarGroup>) {
 	return (
 		<SidebarGroup {...props}>
 			<SidebarGroupContent>

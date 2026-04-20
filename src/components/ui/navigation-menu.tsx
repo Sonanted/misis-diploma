@@ -1,3 +1,5 @@
+import type { ComponentPropsWithRef } from 'react';
+
 import { NavigationMenu as NavigationMenuPrimitive } from '@base-ui/react/navigation-menu';
 import { cva } from 'class-variance-authority';
 import { ChevronDownIcon } from 'lucide-react';
@@ -28,7 +30,7 @@ function NavigationMenu({
 function NavigationMenuList({
 	className,
 	...props
-}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.List>) {
+}: ComponentPropsWithRef<typeof NavigationMenuPrimitive.List>) {
 	return (
 		<NavigationMenuPrimitive.List
 			data-slot="navigation-menu-list"
@@ -41,7 +43,7 @@ function NavigationMenuList({
 function NavigationMenuItem({
 	className,
 	...props
-}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.Item>) {
+}: ComponentPropsWithRef<typeof NavigationMenuPrimitive.Item>) {
 	return (
 		<NavigationMenuPrimitive.Item
 			data-slot="navigation-menu-item"
@@ -104,7 +106,7 @@ function NavigationMenuPositioner({
 				align={align}
 				alignOffset={alignOffset}
 				className={cn(
-					'isolate z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] data-instant:transition-none data-[side=bottom]:before:top-[-10px] data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0',
+					'isolate z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] data-instant:transition-none data-[side=bottom]:before:-top-2.5 data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0',
 					className
 				)}
 				{...props}
@@ -133,7 +135,7 @@ function NavigationMenuLink({ className, ...props }: NavigationMenuPrimitive.Lin
 function NavigationMenuIndicator({
 	className,
 	...props
-}: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.Icon>) {
+}: ComponentPropsWithRef<typeof NavigationMenuPrimitive.Icon>) {
 	return (
 		<NavigationMenuPrimitive.Icon
 			data-slot="navigation-menu-indicator"
