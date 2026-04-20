@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+
 import {
 	BookOpenIcon,
 	BotIcon,
@@ -56,7 +58,7 @@ const data = {
 		},
 	],
 };
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar variant="inset" {...props}>
 			<SidebarHeader>
