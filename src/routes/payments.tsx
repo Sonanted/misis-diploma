@@ -2,10 +2,10 @@ import { createRoute } from '@tanstack/react-router';
 
 import Payments from '../pages/Payments/Payments';
 
-import { rootRoute } from './root';
+import { protectedRoute } from './protected';
 
 export const paymentsRoute = createRoute({
-	getParentRoute: () => rootRoute,
+	getParentRoute: () => protectedRoute,
 	path: '/payments',
 	component: Payments,
 });

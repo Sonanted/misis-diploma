@@ -2,10 +2,10 @@ import { createRoute } from '@tanstack/react-router';
 
 import Profile from '../pages/Profile/Profile';
 
-import { rootRoute } from './root';
+import { protectedRoute } from './protected';
 
 export const profileRoute = createRoute({
-	getParentRoute: () => rootRoute,
+	getParentRoute: () => protectedRoute,
 	path: '/profile',
 	component: Profile,
 });

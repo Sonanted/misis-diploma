@@ -2,10 +2,10 @@ import { createRoute } from '@tanstack/react-router';
 
 import Operations from '../pages/Operations/Operations';
 
-import { rootRoute } from './root';
+import { protectedRoute } from './protected';
 
 export const operationsRoute = createRoute({
-	getParentRoute: () => rootRoute,
+	getParentRoute: () => protectedRoute,
 	path: '/operations',
 	component: Operations,
 });

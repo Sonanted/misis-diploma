@@ -11,6 +11,8 @@ import {
 
 export function NavMain({
 	items,
+	activeUrl,
+	onItemClick,
 }: {
 	items: {
 		title: string;
@@ -22,13 +24,19 @@ export function NavMain({
 			url: string;
 		}[];
 	}[];
+	activeUrl: string;
+	onItemClick: (url: string) => void;
 }) {
 	return (
 		<SidebarGroup>
 			<SidebarMenu>
 				{items.map((item) => (
 					<SidebarMenuItem key={item.title}>
-						<SidebarMenuButton isActive={item.isActive} render={<Link to={item.url} />}>
+						<SidebarMenuButton
+							isActive={item.url === activeUrl}
+							render={<Link to={item.url} />}
+							onClick={() => onItemClick(item.url)}
+						>
 							{item.icon}
 							<span>{item.title}</span>
 						</SidebarMenuButton>
