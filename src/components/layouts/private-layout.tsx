@@ -12,7 +12,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
-export function Layout() {
+export default function PrivateLayout() {
 	return (
 		<SidebarProvider>
 			<AppSidebar />
