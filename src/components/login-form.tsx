@@ -1,6 +1,5 @@
 import { type ComponentProps, useState } from 'react';
-
-import { Link } from '@tanstack/react-router';
+import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,8 +31,10 @@ export function LoginForm({ className, ...props }: ComponentProps<'div'>) {
 									international
 									defaultCountry="RU"
 									placeholder="Enter a phone number"
+									required
 								/>
 							</Field>
+
 							<Field>
 								<div className="flex items-center">
 									<FieldLabel htmlFor="password" className="gap-1">
@@ -42,12 +43,15 @@ export function LoginForm({ className, ...props }: ComponentProps<'div'>) {
 								</div>
 								<Input id="password" type="password" required />
 							</Field>
+
+							{/* // TODO: add forgot password link */}
 							<a
 								href="#"
 								className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
 							>
 								Forgot your password?
 							</a>
+
 							<Field>
 								<Button type="submit">Login</Button>
 								<FieldDescription className="text-center">

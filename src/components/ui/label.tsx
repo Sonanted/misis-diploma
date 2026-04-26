@@ -1,8 +1,9 @@
-import type * as React from 'react';
+/** biome-ignore-all lint/a11y/noLabelWithoutControl: <ui measure> */
+import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
 
-function Label({ className, ...props }: React.ComponentProps<'label'>) {
+function Label({ className, ...props }: ComponentProps<'label'>) {
 	return (
 		<label
 			data-slot="label"
