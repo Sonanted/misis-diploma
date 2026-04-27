@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
 
 import {
 	SidebarGroup,
@@ -7,6 +6,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Link } from 'react-router';
 
 export function NavMain({
 	items,
@@ -28,13 +28,15 @@ export function NavMain({
 }) {
 	return (
 		<SidebarGroup>
-			<SidebarMenu>
+			<SidebarMenu className='flex gap-y-1'>
 				{items.map((item) => (
 					<SidebarMenuItem key={item.title}>
 						<SidebarMenuButton
 							isActive={item.url === activeUrl}
 							render={<Link to={item.url} />}
 							onClick={() => onItemClick(item.url)}
+							size="lg"
+							className="text-lg"
 						>
 							{item.icon}
 							<span>{item.title}</span>

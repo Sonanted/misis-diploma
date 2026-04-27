@@ -62,16 +62,15 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
 	return (
 		<Sidebar variant="inset" {...props}>
-			<SidebarHeader>
+			<SidebarHeader className="border-b">
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<div className="flex w-full items-center gap-2 overflow-hidden p-2 text-left [&_svg]:shrink-0 [&>span:last-child]:truncate h-12 text-sm">
+						<div className="flex w-full items-center gap-2 overflow-hidden p-2 text-left [&_svg]:shrink-0 [&>span:last-child]:truncate h-12">
 							<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
 								<TerminalIcon className="size-4" />
 							</div>
 							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium">Bank</span>
-								<span className="truncate text-xs">Bank</span>
+								<span className="truncate font-medium text-lg">Yet Another Bank</span>
 							</div>
 						</div>
 					</SidebarMenuItem>
