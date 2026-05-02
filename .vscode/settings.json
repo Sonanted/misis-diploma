@@ -1,0 +1,6 @@
+{
+	"editor.codeActionsOnSave": {
+		"source.fixAll.biome": "always"
+	},
+	"js/ts.preferences.autoImportFileExcludePatterns": ["**/node_modules/@base-ui/**"]
+}

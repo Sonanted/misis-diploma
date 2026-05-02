@@ -1,0 +1,71 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.0/schema.json",
+
+	"root": false,
+	"extends": "//",
+
+	"files": {
+		"includes": ["**/*.ts", "**/*.tsx"]
+	},
+
+	"javascript": {
+		"jsxRuntime": "reactClassic",
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"bracketSameLine": false
+		}
+	},
+
+	"linter": {
+		"domains": {
+			"react": "all",
+			"test": "recommended"
+		},
+		"rules": {
+			"correctness": {
+				"useExhaustiveDependencies": "error",
+				"noChildrenProp": "error"
+			},
+			"suspicious": {
+				"noConsole": {
+					"level": "warn",
+					"options": { "allow": ["error", "warn"] }
+				}
+			},
+			"style": {
+				"noNonNullAssertion": "error",
+				"useFragmentSyntax": "error",
+				"useSelfClosingElements": "error"
+			},
+			"a11y": {
+				"useAltText": "error",
+				"useKeyWithClickEvents": "error",
+				"noAutofocus": "warn",
+				"useButtonType": "error"
+			}
+		}
+	},
+
+	"overrides": [
+		{
+			"includes": ["**/*.stories.tsx"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDefaultExport": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["vite.config.ts", "vitest.config.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off"
+					}
+				}
+			}
+		}
+	]
+}
