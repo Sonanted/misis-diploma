@@ -11,7 +11,6 @@ export class UsersController {
 	@UseGuards(JwtAuthGuard)
 	@Get('me')
 	getCurrentUser(@Req() req: IAuthRequest): Promise<User> {
-		console.log(req);
 		return this.usersService.findOne({ id: req.user.id });
 	}
 
@@ -27,7 +26,7 @@ export class UsersController {
 	}
 
 	@Delete(':id')
-	deleteUser(@Param() id: string): Promise<User> {
+	deleteUser(@Param('id') id: string): Promise<User> {
 		return this.usersService.delete(id);
 	}
 }
