@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtAuthGuard } from '../../common/guards/jwt.guard';
+import { HashModule } from '../hash/hash.module';
 import { User } from './entities/user.entity';
-import { HashModule } from 'modules/hash/hash.module';
-import { JwtAuthGuard } from 'common/guards/jwt.guard';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), HashModule],
-  controllers: [UsersController],
-  providers: [UsersService, JwtAuthGuard],
-  exports: [UsersService],
+	imports: [TypeOrmModule.forFeature([User]), HashModule],
+	controllers: [UsersController],
+	providers: [UsersService, JwtAuthGuard],
+	exports: [UsersService],
 })
 export class UsersModule {}

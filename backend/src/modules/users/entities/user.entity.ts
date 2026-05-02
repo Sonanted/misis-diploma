@@ -1,33 +1,32 @@
-import { BeforeInsert, Column, Entity, PrimaryColumn } from "typeorm";
-import { ulid } from "ulidx";
+import { BeforeInsert, Column, Entity } from 'typeorm';
+import { ulid } from 'ulidx';
 
-import { BaseEntity } from "../../../common/entities/base.entity";
+import { BaseEntity } from '../../../common/entities/base.entity';
 
 @Entity()
 export class User extends BaseEntity {
-    @BeforeInsert()
-    generateId() {
-        console.log('generate')
-        if (!this.id) {
-        this.id = `usr_${ulid()}`;
-        }
-    }
+	@BeforeInsert()
+	generateId() {
+		if (!this.id) {
+			this.id = `usr_${ulid()}`;
+		}
+	}
 
-    @Column()
-    firstName: string;
+	@Column()
+	firstName: string;
 
-    @Column()
-    lastName: string;
+	@Column()
+	lastName: string;
 
-    @Column()
-    middleName: string;
+	@Column({ nullable: true })
+	middleName: string;
 
-    @Column({ unique: true })
-    email: string;
+	@Column({ unique: true })
+	email: string;
 
-    @Column({ unique: true })
-    phone: string;
+	@Column({ unique: true })
+	phone: string;
 
-    @Column()
-    password: string;
+	@Column()
+	password: string;
 }

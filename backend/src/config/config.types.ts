@@ -1,3 +1,3 @@
-import { Env } from './config.schema';
+import type { Env } from './config.schema';
 
 export type EnvKey = keyof Env;

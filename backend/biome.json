@@ -1,67 +1,74 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.0/schema.json",
-  
-  "root": false,
-  "extends": "//",
+	"$schema": "https://biomejs.dev/schemas/2.4.0/schema.json",
 
-  "files": {
-    "includes": ["**/*.ts"]
-  },
+	"root": false,
+	"extends": "//",
 
-  "linter": {
-    "domains": {
-      "test": "recommended"
-    },
-    "rules": {
-      "correctness": {
-        "noUnusedFunctionParameters": "off"
-      },
-      "suspicious": {
-        "noConsole": "off",
-        "noExplicitAny": "warn"
-      },
-      "style": {
-        "noNonNullAssertion": "warn",
-        "noNamespace": "error"
-      },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "warn",
-          "options": { "maxAllowedComplexity": 20 }
-        }
-      }
-    }
-  },
+	"files": {
+		"includes": ["**/*.ts"]
+	},
 
-  "overrides": [
-    {
-      "includes": ["**/migrations/**", "**/seeds/**"],
-      "linter": { "enabled": false },
-      "formatter": { "enabled": false }
-    },
-    {
-      "includes": ["**/*.e2e-spec.ts", "**/test/**"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noConsole": "off",
-            "noExplicitAny": "off"
-          },
-          "style": {
-            "noNonNullAssertion": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["**/main.ts"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noConsole": "off"
-          }
-        }
-      }
-    }
-  ]
+	"linter": {
+		"domains": {
+			"test": "recommended"
+		},
+		"rules": {
+			"correctness": {
+				"noUnusedFunctionParameters": "off"
+			},
+			"suspicious": {
+				"noConsole": "off",
+				"noExplicitAny": "warn"
+			},
+			"style": {
+				"noNonNullAssertion": "warn",
+				"noNamespace": "error",
+				"useImportType": "off"
+			},
+			"complexity": {
+				"noExcessiveCognitiveComplexity": {
+					"level": "warn",
+					"options": { "maxAllowedComplexity": 20 }
+				}
+			}
+		}
+	},
+
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
+	},
+
+	"overrides": [
+		{
+			"includes": ["**/migrations/**", "**/seeds/**"],
+			"linter": { "enabled": false },
+			"formatter": { "enabled": false }
+		},
+		{
+			"includes": ["**/*.e2e-spec.ts", "**/test/**"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off",
+						"noExplicitAny": "off"
+					},
+					"style": {
+						"noNonNullAssertion": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/main.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off"
+					}
+				}
+			}
+		}
+	]
 }

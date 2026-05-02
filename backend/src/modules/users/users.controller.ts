@@ -1,16 +1,33 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { Controller, Delete, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt.guard';
-import type { IUserRequest } from '../auth/interfaces/IRequestUser';
+import type { IAuthRequest } from '../auth/interfaces/IAuthRequest';
 import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
 
-@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+	constructor(private readonly usersService: UsersService) {}
 
-  @Get('me')
-  getCurrentUser(@Req() req: IUserRequest): Promise<User> {
-    return this.usersService.findOne({ id: req.user.id });
-  }
+	@UseGuards(JwtAuthGuard)
+	@Get('me')
+	getCurrentUser(@Req() req: IAuthRequest): Promise<User> {
+		console.log(req);
+		return this.usersService.findOne({ id: req.user.id });
+	}
+
+	@Get()
+	getAllUsers(): Promise<User[]> {
+		return this.usersService.findAll();
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('me')
+	deleteCurrentUser(@Req() req: IAuthRequest): Promise<User> {
+		return this.usersService.delete(req.user.id);
+	}
+
+	@Delete(':id')
+	deleteUser(@Param() id: string): Promise<User> {
+		return this.usersService.delete(id);
+	}
 }
