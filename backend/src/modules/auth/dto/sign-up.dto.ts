@@ -1,6 +1,7 @@
+import { ISignupDto } from '@shared/api/ISignupDto';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class SignupDto {
+export class SignupDto implements ISignupDto {
 	@IsString()
 	@IsNotEmpty()
 	firstName: string;

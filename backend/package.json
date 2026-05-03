@@ -7,12 +7,10 @@
 	"license": "UNLICENSED",
 	"scripts": {
 		"build": "nest build",
-		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
 		"start": "nest start",
 		"start:dev": "nest start --watch",
 		"start:debug": "nest start --debug --watch",
 		"start:prod": "node dist/main",
-		"lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
@@ -29,7 +27,6 @@
 		"@nestjs/platform-express": "^11.0.1",
 		"@nestjs/typeorm": "^11.0.1",
 		"bcrypt": "^6.0.0",
-		"better-sqlite3": "^12.9.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.15.1",
 		"joi": "^18.1.2",
@@ -43,11 +40,11 @@
 		"zod": "^4.4.1"
 	},
 	"devDependencies": {
-		"@eslint/eslintrc": "^3.2.0",
-		"@eslint/js": "^9.18.0",
 		"@nestjs/cli": "^11.0.0",
 		"@nestjs/schematics": "^11.0.0",
 		"@nestjs/testing": "^11.0.1",
+		"@swc/cli": "^0.8.1",
+		"@swc/core": "^1.15.33",
 		"@types/bcrypt": "^6.0.0",
 		"@types/express": "^5.0.0",
 		"@types/jest": "^30.0.0",
@@ -63,7 +60,6 @@
 		"ts-loader": "^9.5.2",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
-		"typescript": "^5.7.3",
-		"typescript-eslint": "^8.20.0"
+		"typescript": "^5.7.3"
 	}
 }
