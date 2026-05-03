@@ -20,9 +20,12 @@
 		"strictBindCallApply": false,
 		"noFallthroughCasesInSwitch": false,
 		"strictPropertyInitialization": false,
+		"rootDir": "..",
 		"outDir": "./dist",
 		"baseUrl": ".",
-		"composite": true
+		"paths": {
+			"@shared/*": ["../shared/*"]
+		}
 	},
 
 	"exclude": ["node_modules", "test", "dist", "**/*spec.ts"],

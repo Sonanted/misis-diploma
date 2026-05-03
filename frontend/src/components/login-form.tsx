@@ -1,12 +1,10 @@
 import { type ComponentProps, useState } from 'react';
 import { Link } from 'react-router';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-
 import { PhoneInput } from './phone-input';
 
 export function LoginForm({ className, ...props }: ComponentProps<'div'>) {
@@ -45,10 +43,7 @@ export function LoginForm({ className, ...props }: ComponentProps<'div'>) {
 							</Field>
 
 							{/* // TODO: add forgot password link */}
-							<a
-								href="#"
-								className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-							>
+							<a href="#" className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
 								Forgot your password?
 							</a>
 
