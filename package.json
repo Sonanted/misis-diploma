@@ -5,8 +5,7 @@
 	"description": "",
 	"workspaces": [
 		"frontend",
-		"backend",
-		"shared"
+		"backend"
 	],
 	"repository": {
 		"type": "git",

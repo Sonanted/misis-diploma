@@ -1,4 +1,4 @@
-import { ISigninDto } from '@shared/api/ISignInDto';
+import { ISigninDto } from '@shared/api/ISigninDto';
 import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class SigninDto implements ISigninDto {
