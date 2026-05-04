@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from './config/config.module';
+import { AccountModule } from './modules/account/account.module';
+import { Account } from './modules/account/entities/account.entity';
 import { AuthModule } from './modules/auth/auth.module';
-import { User } from './modules/users/entities/user.entity';
-import { UsersModule } from './modules/users/users.module';
+import { User } from './modules/user/entities/user.entity';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
 	imports: [
@@ -16,12 +18,14 @@ import { UsersModule } from './modules/users/users.module';
 			username: 'postgres',
 			password: 'postgres',
 			database: 'diploma-db',
-			entities: [User],
+			entities: [User, Account],
+			migrations: ['dist/src/database/migrations/*.js'],
 			synchronize: true, // set to false in production and use migrations
 		}),
 
 		AuthModule,
-		UsersModule,
+		UserModule,
+		AccountModule,
 	],
 })
 export class AppModule {}

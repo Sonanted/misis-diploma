@@ -1,7 +1,7 @@
-import { BeforeInsert, Column, Entity } from 'typeorm';
+import { BeforeInsert, Column, Entity, OneToMany } from 'typeorm';
 import { ulid } from 'ulidx';
-
-import { BaseEntity } from '../../../common/entities/base.entity';
+import { BaseEntity } from '../../../shared/entities/base.entity';
+import { Account } from '../../account/entities/account.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -29,4 +29,10 @@ export class User extends BaseEntity {
 
 	@Column()
 	password: string;
+
+	@OneToMany(
+		() => Account,
+		(account) => account.user,
+	)
+	accounts: Account[];
 }

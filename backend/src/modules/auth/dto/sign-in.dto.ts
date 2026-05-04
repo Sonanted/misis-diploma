@@ -1,7 +1,6 @@
-import { ISigninDto } from '@shared/api/ISigninDto';
 import { IsNotEmpty, IsString, Length } from 'class-validator';
 
-export class SigninDto implements ISigninDto {
+export class SigninDto {
 	@IsString()
 	@IsNotEmpty()
 	phone: string;
