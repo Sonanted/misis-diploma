@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, Post, Request, UseGuards } from '@nestjs/common';
-import { LocalAuthGuard } from '../../common/guards/local.guard';
+import { LocalAuthGuard } from '../../shared/guards/local.guard';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/sign-up.dto';
 import type { IAuthRequest } from './interfaces/IAuthRequest';

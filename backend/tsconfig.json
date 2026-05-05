@@ -10,24 +10,14 @@
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true,
+		"strictPropertyInitialization": false,
 		"target": "ES2023",
 		"sourceMap": true,
-		"incremental": true,
-		"skipLibCheck": true,
-		"strictNullChecks": true,
-		"forceConsistentCasingInFileNames": true,
-		"noImplicitAny": false,
-		"strictBindCallApply": false,
-		"noFallthroughCasesInSwitch": false,
-		"strictPropertyInitialization": false,
-		"rootDir": "..",
+		"rootDir": ".",
 		"outDir": "./dist",
-		"baseUrl": ".",
-		"paths": {
-			"@shared/*": ["../shared/*"]
-		}
-	},
-
-	"exclude": ["node_modules", "test", "dist", "**/*spec.ts"],
-	"include": ["src"]
+		"baseUrl": "./",
+		"incremental": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true
+	}
 }

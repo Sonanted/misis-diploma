@@ -6,18 +6,18 @@ import { HashService } from '../hash/hash.service';
 import { User } from './entities/user.entity';
 
 @Injectable()
-export class UsersService {
+export class UserService {
 	constructor(
 		@InjectRepository(User)
-		private readonly usersRepository: Repository<User>,
+		private readonly userRepository: Repository<User>,
 		private readonly hashService: HashService,
 	) {}
 
 	async create(signupDto: SignupDto): Promise<User> {
 		try {
 			const [emailExists, phoneExists] = await Promise.all([
-				this.usersRepository.exists({ where: { email: signupDto.email } }),
-				this.usersRepository.exists({ where: { phone: signupDto.phone } }),
+				this.userRepository.exists({ where: { email: signupDto.email } }),
+				this.userRepository.exists({ where: { phone: signupDto.phone } }),
 			]);
 
 			const errors: Record<string, string> = {};
@@ -31,12 +31,12 @@ export class UsersService {
 
 			const hash = await this.hashService.hash(signupDto.password);
 
-			const user = this.usersRepository.create({
+			const user = this.userRepository.create({
 				...signupDto,
 				password: hash,
 			});
 
-			await this.usersRepository.save(user);
+			await this.userRepository.save(user);
 
 			return this.findOne({ id: user.id });
 		} catch (error) {
@@ -49,11 +49,11 @@ export class UsersService {
 	}
 
 	async findAll(): Promise<User[]> {
-		return this.usersRepository.find();
+		return this.userRepository.find();
 	}
 
 	async findOne(options: FindOptionsWhere<User>): Promise<User> {
-		const user = await this.usersRepository.findOne({ where: options });
+		const user = await this.userRepository.findOne({ where: options });
 		if (!user) {
 			throw new NotFoundException('Пользователь не найден');
 		}
@@ -63,6 +63,6 @@ export class UsersService {
 
 	async delete(id: string): Promise<User> {
 		const user = await this.findOne({ id });
-		return await this.usersRepository.remove(user);
+		return await this.userRepository.remove(user);
 	}
 }

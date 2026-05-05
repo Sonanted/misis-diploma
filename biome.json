@@ -1,111 +1,107 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
 
-  "root": true,
+	"root": true,
 
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true,
-    "defaultBranch": "main"
-  },
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true,
+		"defaultBranch": "main"
+	},
 
-  "files": {
-    "includes": ["**/*.ts", "**/*.tsx", "**/*.json"],
-    "ignoreUnknown": true
-  },
+	"files": {
+		"includes": ["**/*.ts", "**/*.tsx", "**/*.json"],
+		"ignoreUnknown": true
+	},
 
-  "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
-    "indentStyle": "tab",
-    "indentWidth": 1,
-    "lineWidth": 100,
-    "lineEnding": "lf"
-  },
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 1,
+		"lineWidth": 100,
+		"lineEnding": "lf"
+	},
 
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "all",
-      "semicolons": "always",
-      "arrowParentheses": "always",
-      "bracketSpacing": true
-    }
-  },
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true
+		}
+	},
 
-  "json": {
-    "formatter": {
-      "enabled": true,
-      "trailingCommas": "none"
-    },
-    "linter": {
-      "enabled": true
-    }
-  },
+	"json": {
+		"formatter": {
+			"enabled": true,
+			"trailingCommas": "none"
+		},
+		"linter": {
+			"enabled": true
+		}
+	},
 
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
 
-      "correctness": {
-        "noUnusedImports": "error",
-        "noUnusedVariables": "error",
-        "noUnusedFunctionParameters": "warn"
-      },
+			"correctness": {
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error",
+				"noUnusedFunctionParameters": "warn"
+			},
 
-      "suspicious": {
-        "noConsole": "warn",
-        "noDebugger": "error",
-        "noExplicitAny": "warn",
-        "noConfusingVoidType": "error"
-      },
+			"suspicious": {
+				"noConsole": "warn",
+				"noDebugger": "error",
+				"noExplicitAny": "warn",
+				"noConfusingVoidType": "error"
+			},
 
-      "style": {
-        "noNonNullAssertion": "warn",
-        "useConst": "error",
-        "useTemplate": "error",
-        "noParameterAssign": "error",
-        "noUnusedTemplateLiteral": "error"
-      },
+			"style": {
+				"noNonNullAssertion": "warn",
+				"useConst": "error",
+				"useTemplate": "error",
+				"noParameterAssign": "error",
+				"noUnusedTemplateLiteral": "error"
+			},
 
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "warn",
-          "options": { "maxAllowedComplexity": 15 }
-        }
-      }
-    }
-  },
+			"complexity": {
+				"noExcessiveCognitiveComplexity": {
+					"level": "warn",
+					"options": { "maxAllowedComplexity": 15 }
+				}
+			}
+		}
+	},
 
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  },
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
 
-  "overrides": [
-    {
-      "includes": [
-        "**/*.spec.ts",
-        "**/*.test.ts",
-        "**/__tests__/**"
-      ],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noConsole": "off",
-            "noExplicitAny": "off"
-          },
-          "style": {
-            "noNonNullAssertion": "off"
-          }
-        }
-      }
-    }
-  ]
+	"overrides": [
+		{
+			"includes": ["**/*.spec.ts", "**/*.test.ts", "**/__tests__/**"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off",
+						"noExplicitAny": "off"
+					},
+					"style": {
+						"noNonNullAssertion": "off"
+					}
+				}
+			}
+		}
+	]
 }
