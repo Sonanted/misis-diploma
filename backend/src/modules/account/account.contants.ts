@@ -1,9 +1,11 @@
+import { EAccountType } from 'src/shared/enums/EAccountType';
+
 // Балансовые счета по плану счетов ЦБ РФ (Положение 579-П)
 export const BALANCE_SHEET_ACCOUNTS: Record<string, { code: string; name: string }> = {
-	checking: { code: '40817', name: 'Текущий счёт физического лица' },
-	savings: { code: '42301', name: 'Вклад (депозит) до востребования' },
-	loan: { code: '45508', name: 'Кредит физическому лицу' },
-	deposit: { code: '42306', name: 'Срочный депозит физического лица' },
+	[EAccountType.Checking]: { code: '40817', name: 'Текущий счёт физического лица' },
+	[EAccountType.Savings]: { code: '42301', name: 'Вклад (депозит) до востребования' },
+	[EAccountType.Credit]: { code: '45508', name: 'Кредит физическому лицу' },
+	[EAccountType.Currency]: { code: '40817', name: 'Текущий счёт физического лица (валютный)' },
 };
 
 // Коды валют ISO 4217 numeric

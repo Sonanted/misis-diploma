@@ -55,6 +55,7 @@ export class AccountService {
 			status: EAccountStatus.Active,
 			currency: dto.currency,
 			balance: 0,
+			interestRate: dto.interestRate,
 		});
 
 		await this.accountRepository.save(account);
