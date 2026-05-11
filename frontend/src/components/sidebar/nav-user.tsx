@@ -1,12 +1,6 @@
 'use client';
 
-import {
-	BadgeCheckIcon,
-	BellIcon,
-	ChevronsUpDownIcon,
-	CreditCardIcon,
-	LogOutIcon,
-} from 'lucide-react';
+import { BadgeCheckIcon, ChevronsUpDownIcon, LogOutIcon } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -40,7 +34,9 @@ export function NavUser({
 			<SidebarMenuItem>
 				<DropdownMenu>
 					<DropdownMenuTrigger
-						render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}
+						render={
+							<SidebarMenuButton size="lg" className="aria-expanded:bg-muted border-r-2 border-0" />
+						}
 					>
 						<Avatar>
 							<AvatarImage src={user.avatar} alt={user.name} />
@@ -76,22 +72,13 @@ export function NavUser({
 						<DropdownMenuGroup>
 							<DropdownMenuItem>
 								<BadgeCheckIcon />
-								Account
+								Settings
 							</DropdownMenuItem>
 							<DropdownMenuItem>
-								<CreditCardIcon />
-								Billing
-							</DropdownMenuItem>
-							<DropdownMenuItem>
-								<BellIcon />
-								Notifications
+								<LogOutIcon />
+								Log out
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem>
-							<LogOutIcon />
-							Log out
-						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</SidebarMenuItem>

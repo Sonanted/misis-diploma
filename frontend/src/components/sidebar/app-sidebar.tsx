@@ -1,17 +1,17 @@
-import { type ComponentProps, useState } from 'react';
-
 import {
 	BookOpenIcon,
 	BotIcon,
+	CreditCardIcon,
 	LifeBuoyIcon,
 	SendIcon,
 	TerminalIcon,
 	TerminalSquareIcon,
 } from 'lucide-react';
+import { type ComponentProps, useState } from 'react';
 
-import { NavMain } from '@/components/nav-main';
-import { NavSecondary } from '@/components/nav-secondary';
-import { NavUser } from '@/components/nav-user';
+import { NavMain } from '@/components/sidebar/nav-main';
+import { NavSecondary } from '@/components/sidebar/nav-secondary';
+import { NavUser } from '@/components/sidebar/nav-user';
 import {
 	Sidebar,
 	SidebarContent,
@@ -34,6 +34,11 @@ const data = {
 			icon: <TerminalSquareIcon />,
 		},
 		{
+			title: 'Cards',
+			url: '/cards',
+			icon: <CreditCardIcon />,
+		},
+		{
 			title: 'Operations',
 			url: '/operations',
 			icon: <BotIcon />,
@@ -45,24 +50,24 @@ const data = {
 		},
 	],
 	navSecondary: [
-		{
-			title: 'Support',
-			url: '#',
-			icon: <LifeBuoyIcon />,
-		},
-		{
-			title: 'Feedback',
-			url: '#',
-			icon: <SendIcon />,
-		},
+		// {
+		// 	title: 'Support',
+		// 	url: '#',
+		// 	icon: <LifeBuoyIcon />,
+		// },
+		// {
+		// 	title: 'Feedback',
+		// 	url: '#',
+		// 	icon: <SendIcon />,
+		// },
 	],
 };
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 	const [activeUrl, setActiveUrl] = useState('/');
 
 	return (
-		<Sidebar variant="inset" {...props}>
-			<SidebarHeader className="border-b">
+		<Sidebar variant="sidebar" {...props}>
+			<SidebarHeader className="border-b max-h-16">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<div className="flex w-full items-center gap-2 overflow-hidden p-2 text-left [&_svg]:shrink-0 [&>span:last-child]:truncate h-12">

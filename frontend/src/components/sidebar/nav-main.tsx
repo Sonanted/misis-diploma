@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react';
-
+import { Link } from 'react-router';
 import {
 	SidebarGroup,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Link } from 'react-router';
 
 export function NavMain({
 	items,
@@ -28,7 +27,7 @@ export function NavMain({
 }) {
 	return (
 		<SidebarGroup>
-			<SidebarMenu className='flex gap-y-1'>
+			<SidebarMenu className="flex gap-y-1">
 				{items.map((item) => (
 					<SidebarMenuItem key={item.title}>
 						<SidebarMenuButton

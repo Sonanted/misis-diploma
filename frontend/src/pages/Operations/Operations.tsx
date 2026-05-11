@@ -1,19 +1,7 @@
+import { Outlet } from 'react-router';
+
 const Operations = () => {
-	return (
-		<>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-			<h1>Operations page</h1>
-		</>
-	);
+	return <Outlet />;
 };
 
 export default Operations;

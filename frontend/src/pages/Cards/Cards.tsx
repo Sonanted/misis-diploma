@@ -1,7 +1,5 @@
 import { Outlet } from 'react-router';
 
-const Payments = () => {
+export default function Cards() {
 	return <Outlet />;
-};
-
-export default Payments;
+}

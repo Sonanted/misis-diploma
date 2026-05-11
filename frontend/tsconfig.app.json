@@ -25,5 +25,10 @@
 			"@shared/*": ["../shared/*"]
 		}
 	},
-	"include": ["src"]
+	"include": [
+		"src",
+		"unused/account-card.tsx",
+		"unused/account-detail.tsx",
+		"unused/account-list.tsx"
+	]
 }

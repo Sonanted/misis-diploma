@@ -1,3 +1,4 @@
+import { CheckIcon, ChevronsUpDown } from 'lucide-react';
 import {
 	type ComponentProps,
 	type ComponentRef,
@@ -8,8 +9,6 @@ import {
 } from 'react';
 import * as RPNInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
-
-import { CheckIcon, ChevronsUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -62,7 +61,7 @@ PhoneInput.displayName = 'PhoneInput';
 const InputComponent = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
 	({ className, ...props }, ref) => (
 		<Input className={cn('rounded-e-lg rounded-s-none', className)} {...props} ref={ref} />
-	)
+	),
 );
 InputComponent.displayName = 'InputComponent';
 
@@ -108,7 +107,7 @@ const CountrySelect = ({
 						/>
 					</Button>
 				}
-			></PopoverTrigger>
+			/>
 			<PopoverContent className="w-75 p-0">
 				<Command>
 					<CommandInput
@@ -118,7 +117,7 @@ const CountrySelect = ({
 							setTimeout(() => {
 								if (scrollAreaRef.current) {
 									const viewportElement = scrollAreaRef.current.querySelector(
-										'[data-radix-scroll-area-viewport]'
+										'[data-radix-scroll-area-viewport]',
 									);
 									if (viewportElement) {
 										viewportElement.scrollTop = 0;
@@ -142,7 +141,7 @@ const CountrySelect = ({
 											onChange={onChange}
 											onSelectComplete={() => setIsOpen(false)}
 										/>
-									) : null
+									) : null,
 								)}
 							</CommandGroup>
 						</ScrollArea>
