@@ -1,5 +1,5 @@
-const Dashboard = () => {
-	return <h1>Dashboard page</h1>;
-};
+import { Outlet } from 'react-router';
 
-export default Dashboard;
+export default function Dashboard() {
+	return <Outlet />;
+}

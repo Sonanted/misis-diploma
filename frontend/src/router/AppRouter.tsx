@@ -1,11 +1,12 @@
-import { BrowserRouter, Routes } from 'react-router';
-
-import { routes } from './routes';
+import { RouterProvider } from 'react-router';
+import { Toaster } from '@/components/ui/sonner';
+import { router } from './routes';
 
 export function AppRouter() {
 	return (
-		<BrowserRouter>
-			<Routes>{routes}</Routes>
-		</BrowserRouter>
+		<>
+			<RouterProvider router={router} />
+			<Toaster />
+		</>
 	);
 }

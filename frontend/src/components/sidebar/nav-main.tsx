@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
-
+import { NavLink } from 'react-router';
 import {
 	SidebarGroup,
 	SidebarMenu,
@@ -10,8 +9,6 @@ import {
 
 export function NavMain({
 	items,
-	activeUrl,
-	onItemClick,
 }: {
 	items: {
 		title: string;
@@ -28,17 +25,17 @@ export function NavMain({
 }) {
 	return (
 		<SidebarGroup>
-			<SidebarMenu>
+			<SidebarMenu className="flex gap-y-1">
 				{items.map((item) => (
 					<SidebarMenuItem key={item.title}>
-						<SidebarMenuButton
-							isActive={item.url === activeUrl}
-							render={<Link to={item.url} />}
-							onClick={() => onItemClick(item.url)}
-						>
-							{item.icon}
-							<span>{item.title}</span>
-						</SidebarMenuButton>
+						<NavLink to={item.url}>
+							{({ isActive }) => (
+								<SidebarMenuButton isActive={isActive} size="lg" className="text-lg">
+									{item.icon}
+									<span>{item.title}</span>
+								</SidebarMenuButton>
+							)}
+						</NavLink>
 					</SidebarMenuItem>
 				))}
 			</SidebarMenu>
