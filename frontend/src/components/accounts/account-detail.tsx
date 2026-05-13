@@ -1,4 +1,4 @@
-import { Download, Send } from 'lucide-react';
+import { ArrowLeft, CreditCard, Download, Send } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -15,6 +15,10 @@ const accountsData = {
 		type: 'Checking',
 		iban: 'US64 SVBK 0000 0000 0000 3456',
 		swift: 'SVBKUS6S',
+		linkedCards: [
+			{ id: '3', name: 'Debit Card', cardNumber: '**** 3456', type: 'Debit' },
+			{ id: '1', name: 'Visa Platinum', cardNumber: '**** 4532', type: 'Credit' },
+		],
 		recentTransactions: [
 			{ id: 't1', date: '2026-05-08', description: 'Grocery Store', amount: -127.45 },
 			{ id: 't2', date: '2026-05-07', description: 'Salary Deposit', amount: 4500.0 },
@@ -31,6 +35,7 @@ const accountsData = {
 		type: 'Savings',
 		iban: 'US64 SVBK 0000 0000 0000 7890',
 		swift: 'SVBKUS6S',
+		linkedCards: [{ id: '2', name: 'Mastercard Gold', cardNumber: '**** 8765', type: 'Credit' }],
 		recentTransactions: [
 			{ id: 't5', date: '2026-05-01', description: 'Interest Payment', amount: 125.25 },
 			{ id: 't6', date: '2026-04-28', description: 'Transfer from Checking', amount: 2000.0 },
@@ -45,6 +50,7 @@ const accountsData = {
 		type: 'Business',
 		iban: 'US64 SVBK 0000 0000 0000 1234',
 		swift: 'SVBKUS6S',
+		linkedCards: [{ id: '6', name: 'Business Debit', cardNumber: '**** 5566', type: 'Debit' }],
 		recentTransactions: [
 			{ id: 't7', date: '2026-05-08', description: 'Client Payment', amount: 5400.0 },
 			{ id: 't8', date: '2026-05-07', description: 'Office Supplies', amount: -340.5 },
@@ -67,6 +73,13 @@ export function AccountDetail() {
 
 	return (
 		<div className="p-8">
+			<Link to="/accounts">
+				<Button variant="ghost" className="mb-6">
+					<ArrowLeft className="size-4 mr-2" />
+					Back to Accounts
+				</Button>
+			</Link>
+
 			<div className="mb-6">
 				<div className="flex items-start justify-between mb-2">
 					<h1 className="text-3xl font-semibold">{account.name}</h1>
@@ -75,7 +88,7 @@ export function AccountDetail() {
 				<p className="text-muted-foreground">{account.accountNumber}</p>
 			</div>
 
-			<div className="grid gap-6 md:grid-cols-2 mb-6">
+			<div className="grid gap-6 grid-cols-1 lg:grid-cols-2 mb-6">
 				<Card>
 					<CardHeader>
 						<CardTitle>Available Balance</CardTitle>
@@ -116,6 +129,40 @@ export function AccountDetail() {
 					<Download className="size-4 mr-2" />
 					Download Statement
 				</Button>
+			</div>
+
+			<div className="grid gap-6 md:grid-cols-1 mb-6">
+				<Card>
+					<CardHeader>
+						<CardTitle>Linked Cards</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-3">
+							{account.linkedCards.map((card, index) => (
+								<div key={card.id}>
+									{index > 0 && <Separator className="mb-3" />}
+									<Link
+										to={`/cards/${card.id}`}
+										className="flex items-center justify-between hover:bg-accent -mx-3 px-3 py-2 rounded-md transition-colors"
+									>
+										<div className="flex items-center gap-3">
+											<div className="p-2 bg-primary/10 rounded-lg">
+												<CreditCard className="size-4 text-primary" />
+											</div>
+											<div>
+												<p className="font-medium text-sm">{card.name}</p>
+												<p className="text-xs text-muted-foreground">{card.cardNumber}</p>
+											</div>
+										</div>
+										<Badge variant="secondary" className="text-xs">
+											{card.type}
+										</Badge>
+									</Link>
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 
 			<Card>

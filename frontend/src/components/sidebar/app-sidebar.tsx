@@ -2,8 +2,6 @@ import {
 	BookOpenIcon,
 	BotIcon,
 	CreditCardIcon,
-	LifeBuoyIcon,
-	SendIcon,
 	TerminalIcon,
 	TerminalSquareIcon,
 } from 'lucide-react';
@@ -19,6 +17,7 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuItem,
+	SidebarSeparator,
 } from '@/components/ui/sidebar';
 
 const data = {
@@ -87,7 +86,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 				<NavSecondary items={data.navSecondary} className="mt-auto" />
 			</SidebarContent>
 
-			<SidebarFooter>
+			<SidebarFooter className="border-t">
 				<NavUser user={data.user} />
 			</SidebarFooter>
 		</Sidebar>

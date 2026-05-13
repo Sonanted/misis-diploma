@@ -8,6 +8,7 @@ import PublicLayout from '@/components/layouts/public-layout';
 import { OperationDetail } from '@/components/operations/operation-detail';
 import { OperationsList } from '@/components/operations/operations-list';
 import { NewPayment } from '@/components/payment/new-payment';
+import { Settings } from '@/components/settings/settings';
 import Cards from '@/pages/Cards/Cards';
 import Dashboard from '@/pages/Dashboard/Dashboard';
 import Login from '@/pages/Login/Login';
@@ -106,6 +107,11 @@ export const router = createBrowserRouter([
 								element: <NewPayment />,
 							},
 						],
+					},
+					{
+						path: 'settings',
+						element: <Settings />,
+						handle: { breadcrumb: 'Settings' },
 					},
 					{ path: '*', element: <Navigate to="/" replace /> },
 				],

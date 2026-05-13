@@ -1,4 +1,4 @@
-import { type ComponentProps, useState } from 'react';
+import { type ComponentProps, useId, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,13 @@ import { PhoneInput } from '@/components/ui/phone-input';
 export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 	const [phoneNumber, setPhoneNumber] = useState('');
 
+	const firstNameInputId = useId();
+	const lastNameInputId = useId();
+	const phoneInputId = useId();
+	const emailInputId = useId();
+	const passwordInputId = useId();
+	const confirmPasswordInputId = useId();
+
 	return (
 		<Card {...props}>
 			<CardHeader>
@@ -20,25 +27,25 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 				<form>
 					<FieldGroup>
 						<Field>
-							<FieldLabel htmlFor="name">
+							<FieldLabel htmlFor={firstNameInputId}>
 								First name <span className="text-destructive">*</span>
 							</FieldLabel>
-							<Input id="name" type="text" placeholder="John" required />
+							<Input id={firstNameInputId} type="text" placeholder="John" required />
 						</Field>
 
 						<Field>
-							<FieldLabel htmlFor="name">
+							<FieldLabel htmlFor={lastNameInputId}>
 								Last Name <span className="text-destructive">*</span>
 							</FieldLabel>
-							<Input id="name" type="text" placeholder="Doe" required />
+							<Input id={lastNameInputId} type="text" placeholder="Doe" required />
 						</Field>
 
 						<Field>
-							<FieldLabel htmlFor="phone">
+							<FieldLabel htmlFor={phoneInputId}>
 								Phone <span className="text-destructive">*</span>
 							</FieldLabel>
 							<PhoneInput
-								id="phone"
+								id={phoneInputId}
 								value={phoneNumber}
 								onChange={setPhoneNumber}
 								international
@@ -49,23 +56,23 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 						</Field>
 
 						<Field>
-							<FieldLabel htmlFor="email">Email</FieldLabel>
-							<Input id="email" type="email" placeholder="m@example.com" />
+							<FieldLabel htmlFor={emailInputId}>Email</FieldLabel>
+							<Input id={emailInputId} type="email" placeholder="m@example.com" />
 						</Field>
 
 						<Field>
-							<FieldLabel htmlFor="password">
+							<FieldLabel htmlFor={passwordInputId}>
 								Password <span className="text-destructive">*</span>
 							</FieldLabel>
-							<Input id="password" type="password" required />
+							<Input id={passwordInputId} type="password" required />
 							<FieldDescription>Must be at least 8 characters long.</FieldDescription>
 						</Field>
 
 						<Field>
-							<FieldLabel htmlFor="confirm-password">
+							<FieldLabel htmlFor={confirmPasswordInputId}>
 								Confirm Password <span className="text-destructive">*</span>
 							</FieldLabel>
-							<Input id="confirm-password" type="password" required />
+							<Input id={confirmPasswordInputId} type="password" required />
 							<FieldDescription>Please confirm your password.</FieldDescription>
 						</Field>
 

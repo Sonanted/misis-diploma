@@ -11,9 +11,9 @@ export default function PrivateLayout() {
 		<SidebarProvider>
 			<div className="flex w-full h-screen  bg-background text-foreground">
 				<AppSidebar />
-				<SidebarInset className="overflow-y-hidden">
+				<SidebarInset>
 					<SidebarInsetHeader />
-					<ScrollArea className="overflow-y-auto">
+					<ScrollArea className="flex-1 overflow-y-auto">
 						<div className="max-w-5xl mx-auto p-6">
 							<Outlet />
 						</div>

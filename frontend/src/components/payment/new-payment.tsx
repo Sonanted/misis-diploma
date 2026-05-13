@@ -76,14 +76,14 @@ export function NewPayment() {
 
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex-shrink-0 p-8 pb-6 border-b">
+			<div className="shrink-0 p-8 pb-6 border-b">
 				<div className="max-w-2xl mx-auto">
 					<div className="mb-6">
 						<h1 className="text-3xl font-semibold mb-2">New Payment</h1>
 						<p className="text-muted-foreground">Choose a payment method and send money</p>
 					</div>
 
-					<div className="grid grid-cols-3 gap-4">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<Button
 							variant={selectedMethod === 'account' ? 'default' : 'outline'}
 							className="h-24 flex-col gap-2"

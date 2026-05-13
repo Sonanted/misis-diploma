@@ -1,4 +1,4 @@
-import { type ComponentProps, useState } from 'react';
+import { type ComponentProps, useId, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -11,20 +11,26 @@ import { cn } from '@/lib/utils';
 export default function Login({ className, ...props }: ComponentProps<'div'>) {
 	const [phoneNumber, setPhoneNumber] = useState('');
 
+	const phoneInputId = useId();
+
+	const passwordInputId = useId();
+
 	return (
 		<div className={cn('flex flex-col gap-6', className)} {...props}>
 			<Card>
 				<CardHeader>
 					<CardTitle>Login to your account</CardTitle>
-					<CardDescription>Enter your email below to login to your account</CardDescription>
+					<CardDescription>
+						Enter your phone number and password below to login to your account
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form>
 						<FieldGroup>
 							<Field>
-								<FieldLabel htmlFor="phone">Phone</FieldLabel>
+								<FieldLabel htmlFor={phoneInputId}>Phone</FieldLabel>
 								<PhoneInput
-									id="phone"
+									id={phoneInputId}
 									value={phoneNumber}
 									onChange={setPhoneNumber}
 									international
@@ -36,18 +42,15 @@ export default function Login({ className, ...props }: ComponentProps<'div'>) {
 
 							<Field>
 								<div className="flex items-center">
-									<FieldLabel htmlFor="password" className="gap-1">
+									<FieldLabel htmlFor={passwordInputId} className="gap-1">
 										Password
 									</FieldLabel>
 								</div>
-								<Input id="password" type="password" required />
+								<Input id={passwordInputId} type="password" required />
 							</Field>
 
 							{/* // TODO: add forgot password link */}
-							<a
-								href="#"
-								className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-							>
+							<a href="#" className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
 								Forgot your password?
 							</a>
 
