@@ -1,5 +1,5 @@
-import { Save } from 'lucide-react';
-import { useState } from 'react';
+import { KeyRound, LogOut, Monitor, Moon, Save, Sun } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -8,7 +8,131 @@ import { Label } from '../ui/label';
 import { PhoneInput } from '../ui/phone-input';
 import { Separator } from '../ui/separator';
 
+// ---------------------------------------------------------------------------
+// Theme
+// ---------------------------------------------------------------------------
+// Три состояния: system / light / dark.
+// В localStorage хранится 'light' | 'dark' | 'system' (ключ 'theme').
+// При монтировании хук применяет класс 'dark' на <html> — без мигания,
+// если в index.html добавить inline-скрипт (см. комментарий в конце файла).
+
+type Theme = 'light' | 'dark' | 'system';
+
+function applyTheme(theme: Theme) {
+	const root = document.documentElement;
+	if (theme === 'system') {
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		root.classList.toggle('dark', prefersDark);
+	} else {
+		root.classList.toggle('dark', theme === 'dark');
+	}
+}
+
+function useTheme() {
+	const [theme, setTheme] = useState<Theme>(() => {
+		return (localStorage.getItem('theme') as Theme) ?? 'system';
+	});
+
+	useEffect(() => {
+		applyTheme(theme);
+		localStorage.setItem('theme', theme);
+	}, [theme]);
+
+	// Реагируем на системные изменения если выбран 'system'
+	useEffect(() => {
+		const mq = window.matchMedia('(prefers-color-scheme: dark)');
+		const handler = () => {
+			if (theme === 'system') applyTheme('system');
+		};
+		mq.addEventListener('change', handler);
+		return () => mq.removeEventListener('change', handler);
+	}, [theme]);
+
+	return { theme, setTheme };
+}
+
+// ---------------------------------------------------------------------------
+// Language
+// ---------------------------------------------------------------------------
+// Заглушка — замени на useTranslation() из react-i18next когда будет готово.
+// Структура JSON-файлов: en.json / ru.json с теми же ключами.
+
+const LANGUAGES = [
+	{ code: 'en', label: 'English' },
+	{ code: 'ru', label: 'Русский' },
+] as const;
+
+type LangCode = (typeof LANGUAGES)[number]['code'];
+
+function useLanguage() {
+	const [lang, setLang] = useState<LangCode>(() => {
+		return (localStorage.getItem('i18n_language') as LangCode) ?? 'en';
+	});
+
+	const changeLanguage = (code: LangCode) => {
+		setLang(code);
+		localStorage.setItem('i18n_language', code);
+		// Когда подключишь i18next: i18n.changeLanguage(code)
+	};
+
+	return { lang, changeLanguage };
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
+	{ value: 'light', label: 'Light', icon: Sun },
+	{ value: 'dark', label: 'Dark', icon: Moon },
+	{ value: 'system', label: 'System', icon: Monitor },
+];
+
+function ThemeSwitcher({ theme, onChange }: { theme: Theme; onChange: (t: Theme) => void }) {
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+			{THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+				<Button
+					key={value}
+					type="button"
+					size="sm"
+					variant={theme === value ? 'default' : 'outline'}
+					onClick={() => onChange(value)}
+				>
+					<Icon className="size-3.5" />
+					{label}
+				</Button>
+			))}
+		</div>
+	);
+}
+
+function LanguageSelector({ lang, onChange }: { lang: LangCode; onChange: (c: LangCode) => void }) {
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+			{LANGUAGES.map(({ code, label }) => (
+				<Button
+					key={code}
+					type="button"
+					size="sm"
+					variant={lang === code ? 'default' : 'outline'}
+					onClick={() => onChange(code)}
+				>
+					{label}
+				</Button>
+			))}
+		</div>
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
 export function Settings() {
+	const { theme, setTheme } = useTheme();
+	const { lang, changeLanguage } = useLanguage();
+
 	const [personalInfo, setPersonalInfo] = useState({
 		firstName: 'John',
 		middleName: 'Alexander',
@@ -17,6 +141,8 @@ export function Settings() {
 		phone: '+79997732136',
 	});
 
+	const pwdId = useId();
+	const [passwordOpen, setPasswordOpen] = useState(false);
 	const [passwordData, setPasswordData] = useState({
 		currentPassword: '',
 		newPassword: '',
@@ -25,7 +151,6 @@ export function Settings() {
 
 	const handlePersonalInfoSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-
 		if (
 			!personalInfo.firstName ||
 			!personalInfo.lastName ||
@@ -35,34 +160,26 @@ export function Settings() {
 			toast.error('Please fill in all required fields');
 			return;
 		}
-
 		toast.success('Personal information updated successfully!');
 	};
 
 	const handlePasswordSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-
 		if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
 			toast.error('Please fill in all password fields');
 			return;
 		}
-
 		if (passwordData.newPassword !== passwordData.confirmPassword) {
 			toast.error('New passwords do not match');
 			return;
 		}
-
 		if (passwordData.newPassword.length < 8) {
 			toast.error('Password must be at least 8 characters long');
 			return;
 		}
-
 		toast.success('Password updated successfully!');
-		setPasswordData({
-			currentPassword: '',
-			newPassword: '',
-			confirmPassword: '',
-		});
+		setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+		setPasswordOpen(false);
 	};
 
 	return (
@@ -74,6 +191,7 @@ export function Settings() {
 						<p className="text-muted-foreground">Manage your account settings and preferences</p>
 					</div>
 
+					{/* ── Personal Information ────────────────────────────────── */}
 					<Card>
 						<CardHeader>
 							<CardTitle>Personal Information</CardTitle>
@@ -108,8 +226,6 @@ export function Settings() {
 									/>
 								</div>
 
-								<Separator />
-
 								<div className="space-y-2">
 									<Label htmlFor="email">Email *</Label>
 									<Input
@@ -142,6 +258,7 @@ export function Settings() {
 						</CardContent>
 					</Card>
 
+					{/* ── Change Password ─────────────────────────────────────── */}
 					<Card>
 						<CardHeader>
 							<CardTitle>Change Password</CardTitle>
@@ -191,8 +308,50 @@ export function Settings() {
 							</form>
 						</CardContent>
 					</Card>
+
+					{/* ── Appearance ─────────────────────────────────────────── */}
+					<Card>
+						<CardHeader>
+							<CardTitle>Appearance</CardTitle>
+							<CardDescription>Customize how the app looks and feels</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-6">
+							<div className="space-y-2">
+								<Label>Theme</Label>
+								<ThemeSwitcher theme={theme} onChange={setTheme} />
+							</div>
+
+							{/* <Separator /> */}
+
+							<div className="space-y-2">
+								<Label>Language</Label>
+								<LanguageSelector lang={lang} onChange={changeLanguage} />
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* ── Log Out ─────────────────────────────────────────────── */}
+					<Button type="button" variant="destructive" className="w-full">
+						<LogOut className="size-4 mr-2" />
+						Log Out
+					</Button>
 				</div>
 			</div>
 		</div>
 	);
 }
+
+// ---------------------------------------------------------------------------
+// Чтобы избежать мигания темы при загрузке (FOUC), добавь в index.html
+// внутри <head> ДО любых скриптов:
+//
+// <script>
+//   (function() {
+//     var t = localStorage.getItem('theme');
+//     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+//     if (t === 'dark' || (!t || t === 'system') && prefersDark) {
+//       document.documentElement.classList.add('dark');
+//     }
+//   })();
+// </script>
+// ---------------------------------------------------------------------------

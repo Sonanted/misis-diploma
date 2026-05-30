@@ -86,7 +86,7 @@ export function OperationsList() {
 				<h1 className="text-3xl font-semibold mb-2">Operations</h1>
 				<p className="text-muted-foreground">View all your transactions and transfers</p>
 			</div>
-			<div className="space-y-3">
+			<div className="grid gap-4">
 				{operations.map((operation) => (
 					<Link key={operation.id} to={`/operations/${operation.id}`}>
 						<Card className="hover:bg-accent transition-colors cursor-pointer">

@@ -1,5 +1,6 @@
 import { CreditCard as CreditCardIcon, Lock, Trash2 } from 'lucide-react';
 import { useParams } from 'react-router';
+import { NotFound } from '@/pages/NotFound/NotFound';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -64,9 +65,12 @@ export function CardDetail() {
 
 	if (!card) {
 		return (
-			<div className="p-8">
-				<p>Card not found</p>
-			</div>
+			<NotFound
+				title="Card Not Found"
+				description="The card you're looking for doesn't exist or has been removed."
+				backTo="/cards"
+				backLabel="Go to Cards"
+			/>
 		);
 	}
 
