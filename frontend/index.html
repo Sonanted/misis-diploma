@@ -1,12 +1,40 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <style>
+      :root {
+        --background: oklch(1 0 0);
+        --foreground: oklch(0.145 0 0);
+      }
+
+      .dark {
+        --background: oklch(0.145 0 0);
+        --foreground: oklch(0.985 0 0);
+      }
+
+      html,
+      body {
+        background: var(--background);
+        color: var(--foreground);
+      }
+    </style>
+    <script>
+      (function() {
+        var t = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (t === 'dark' || (!t || t === 'system') && prefersDark) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>misis-diploma</title>
+    
   </head>
   <body>
     <div id="root"></div>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,5 +1,7 @@
+import { Settings } from '@/components/settings/settings';
+
 const Profile = () => {
-	return <h1>Profile page</h1>;
+	return <Settings />;
 };
 
 export default Profile;

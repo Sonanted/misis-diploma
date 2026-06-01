@@ -128,13 +128,6 @@ export function OperationDetail() {
 
 	return (
 		<div className="p-8">
-			<Link to="/operations">
-				<Button variant="ghost" className="mb-6">
-					<ArrowLeft className="size-4 mr-2" />
-					Back to Operations
-				</Button>
-			</Link>
-
 			<div className="mb-6">
 				<div className="flex items-start gap-4 mb-4">
 					<div className="p-3 bg-accent rounded-xl">{getOperationIcon(operation.type)}</div>

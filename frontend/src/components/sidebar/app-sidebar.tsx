@@ -8,7 +8,6 @@ import {
 import { type ComponentProps, useState } from 'react';
 
 import { NavMain } from '@/components/sidebar/nav-main';
-import { NavSecondary } from '@/components/sidebar/nav-secondary';
 import { NavUser } from '@/components/sidebar/nav-user';
 import {
 	Sidebar,
@@ -17,7 +16,6 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuItem,
-	SidebarSeparator,
 } from '@/components/ui/sidebar';
 
 const data = {
@@ -48,18 +46,6 @@ const data = {
 			icon: <BookOpenIcon />,
 		},
 	],
-	navSecondary: [
-		// {
-		// 	title: 'Support',
-		// 	url: '#',
-		// 	icon: <LifeBuoyIcon />,
-		// },
-		// {
-		// 	title: 'Feedback',
-		// 	url: '#',
-		// 	icon: <SendIcon />,
-		// },
-	],
 };
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 	const [activeUrl, setActiveUrl] = useState('/');
@@ -83,7 +69,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
 			<SidebarContent>
 				<NavMain items={data.navMain} activeUrl={activeUrl} onItemClick={setActiveUrl} />
-				<NavSecondary items={data.navSecondary} className="mt-auto" />
 			</SidebarContent>
 
 			<SidebarFooter className="border-t">

@@ -8,12 +8,13 @@ import PublicLayout from '@/components/layouts/public-layout';
 import { OperationDetail } from '@/components/operations/operation-detail';
 import { OperationsList } from '@/components/operations/operations-list';
 import { NewPayment } from '@/components/payment/new-payment';
-import { Settings } from '@/components/settings/settings';
 import Cards from '@/pages/Cards/Cards';
 import Dashboard from '@/pages/Dashboard/Dashboard';
+import ForgotPassword from '@/pages/ForgotPassword/ForgotPassword';
 import Login from '@/pages/Login/Login';
 import Operations from '@/pages/Operations/Operations';
 import Payments from '@/pages/Payments/Payments';
+import Profile from '@/pages/Profile/Profile';
 import Signup from '@/pages/Signup/Signup';
 import PrivateRoute from './guards/PrivateRoute';
 import PublicRoute from './guards/PublicRoute';
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
 				children: [
 					{ path: '/login', element: <Login /> },
 					{ path: '/signup', element: <Signup /> },
+					{ path: '/forgot-password', element: <ForgotPassword /> },
+					{ path: '/login', element: <Login /> },
+					{ path: '/signup', element: <Signup /> },
+					{ path: '/forgot-password', element: <ForgotPassword /> },
 					{ path: '*', element: <Navigate to="/login" replace /> },
 				],
 			},
@@ -109,9 +114,9 @@ export const router = createBrowserRouter([
 						],
 					},
 					{
-						path: 'settings',
-						element: <Settings />,
-						handle: { breadcrumb: 'Settings' },
+						path: 'profile',
+						element: <Profile />,
+						handle: { breadcrumb: 'Profile' },
 					},
 					{ path: '*', element: <Navigate to="/" replace /> },
 				],
