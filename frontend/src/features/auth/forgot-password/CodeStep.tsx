@@ -1,36 +1,33 @@
-import { type SubmitEvent, useId } from 'react';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/shared/ui/button';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/shared/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 
-export function CodeStep({
-	code,
-	setCode,
-	onSubmit,
-}: {
-	code: string;
-	setCode: (v: string) => void;
-	onSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
-}) {
+type CodeFormValues = { code: string };
+
+export function CodeStep({ onSubmit }: { onSubmit: (data: CodeFormValues) => void }) {
 	const { t } = useTranslation();
-	const codeInputId = useId();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<CodeFormValues>({ mode: 'onBlur' });
+
 	return (
-		<form onSubmit={onSubmit}>
+		<form onSubmit={handleSubmit(onSubmit)}>
 			<FieldGroup>
-				<Field>
-					<FieldLabel htmlFor={codeInputId}>
+				<Field data-invalid={!!errors.code}>
+					<FieldLabel>
 						{t('auth.forgot_password.code')} <span className="text-destructive">*</span>
 					</FieldLabel>
 					<Input
-						id={codeInputId}
 						type="text"
 						placeholder={t('auth.forgot_password.code_placeholder')}
-						value={code}
-						onChange={(e) => setCode(e.target.value)}
-						required
+						{...register('code', { required: t('validation.required') })}
 					/>
+					<FieldError errors={[errors.code]} />
 				</Field>
 				<Field>
 					<Button type="submit">{t('auth.forgot_password.verify_code')}</Button>

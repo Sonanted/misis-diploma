@@ -1,5 +1,6 @@
 import { ArrowRight, Plus } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -16,122 +17,51 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/shared/ui/dialog';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 const accounts = [
-	{
-		id: '1',
-		name: 'Checking Account',
-		accountNumber: '****3456',
-		balance: 15420.5,
-		currency: 'USD',
-		type: 'Checking',
-	},
-	{
-		id: '2',
-		name: 'Savings Account',
-		accountNumber: '****7890',
-		balance: 48750.25,
-		currency: 'USD',
-		type: 'Savings',
-	},
-	{
-		id: '3',
-		name: 'Business Account',
-		accountNumber: '****1234',
-		balance: 92340.0,
-		currency: 'USD',
-		type: 'Business',
-	},
-	{
-		id: '4',
-		name: 'Emergency Fund',
-		accountNumber: '****5678',
-		balance: 25000.0,
-		currency: 'USD',
-		type: 'Savings',
-	},
-	{
-		id: '5',
-		name: 'Investment Account',
-		accountNumber: '****9012',
-		balance: 156780.75,
-		currency: 'USD',
-		type: 'Savings',
-	},
-	{
-		id: '6',
-		name: 'Joint Checking',
-		accountNumber: '****3344',
-		balance: 8920.4,
-		currency: 'USD',
-		type: 'Checking',
-	},
-	{
-		id: '7',
-		name: 'Vacation Savings',
-		accountNumber: '****5566',
-		balance: 12450.0,
-		currency: 'USD',
-		type: 'Savings',
-	},
-	{
-		id: '8',
-		name: 'Freelance Business',
-		accountNumber: '****7788',
-		balance: 34560.9,
-		currency: 'USD',
-		type: 'Business',
-	},
-	{
-		id: '9',
-		name: 'Tax Savings',
-		accountNumber: '****9900',
-		balance: 18300.0,
-		currency: 'USD',
-		type: 'Savings',
-	},
-	{
-		id: '10',
-		name: 'Home Down Payment',
-		accountNumber: '****1122',
-		balance: 67890.5,
-		currency: 'USD',
-		type: 'Savings',
-	},
+	{ id: '1', name: 'Checking Account', accountNumber: '****3456', balance: 15420.5, currency: 'USD', type: 'Checking' },
+	{ id: '2', name: 'Savings Account', accountNumber: '****7890', balance: 48750.25, currency: 'USD', type: 'Savings' },
+	{ id: '3', name: 'Business Account', accountNumber: '****1234', balance: 92340.0, currency: 'USD', type: 'Business' },
+	{ id: '4', name: 'Emergency Fund', accountNumber: '****5678', balance: 25000.0, currency: 'USD', type: 'Savings' },
+	{ id: '5', name: 'Investment Account', accountNumber: '****9012', balance: 156780.75, currency: 'USD', type: 'Savings' },
+	{ id: '6', name: 'Joint Checking', accountNumber: '****3344', balance: 8920.4, currency: 'USD', type: 'Checking' },
+	{ id: '7', name: 'Vacation Savings', accountNumber: '****5566', balance: 12450.0, currency: 'USD', type: 'Savings' },
+	{ id: '8', name: 'Freelance Business', accountNumber: '****7788', balance: 34560.9, currency: 'USD', type: 'Business' },
+	{ id: '9', name: 'Tax Savings', accountNumber: '****9900', balance: 18300.0, currency: 'USD', type: 'Savings' },
+	{ id: '10', name: 'Home Down Payment', accountNumber: '****1122', balance: 67890.5, currency: 'USD', type: 'Savings' },
 ];
+
+type CreateAccountValues = {
+	accountName: string;
+	accountType: string;
+	initialDeposit: number;
+};
 
 export function AccountsList() {
 	const { t } = useTranslation();
 	const [open, setOpen] = useState(false);
 	const { balanceVisible, toggle } = usePrivacyStore();
-	const accountNameId = useId();
-	const accountTypeId = useId();
-	const initialDepositId = useId();
-	const [formData, setFormData] = useState({
-		accountName: '',
-		accountType: '',
-		initialDeposit: '',
-	});
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
+	const {
+		register,
+		control,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<CreateAccountValues>({ mode: 'onBlur' });
 
-		if (!formData.accountName || !formData.accountType || !formData.initialDeposit) {
-			toast.error(t('accounts.toast_fill_required'));
-			return;
-		}
+	useEffect(() => {
+		if (!open) reset();
+	}, [open, reset]);
 
+	const onSubmit = (data: CreateAccountValues) => {
+		// biome-ignore lint/suspicious/noConsole: temporary
+		console.log('create account', data);
 		toast.success(t('accounts.create'), {
-			description: `${formData.accountName} has been created with $${parseFloat(formData.initialDeposit).toFixed(2)}`,
-		});
-
-		setFormData({
-			accountName: '',
-			accountType: '',
-			initialDeposit: '',
+			description: `${data.accountName} has been created with $${Number(data.initialDeposit).toFixed(2)}`,
 		});
 		setOpen(false);
 	};
@@ -160,50 +90,58 @@ export function AccountsList() {
 							<DialogTitle>{t('accounts.dialog_title')}</DialogTitle>
 							<DialogDescription>{t('accounts.dialog_description')}</DialogDescription>
 						</DialogHeader>
-						<form onSubmit={handleSubmit} className="space-y-4">
-							<div className="space-y-2">
-								<Label htmlFor={accountNameId}>{t('accounts.name_label')} *</Label>
-								<Input
-									id={accountNameId}
-									placeholder={t('accounts.name_placeholder')}
-									value={formData.accountName}
-									onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<Label htmlFor={accountTypeId}>{t('accounts.type_label')} *</Label>
-								<Select
-									value={formData.accountType}
-									onValueChange={(value) => setFormData({ ...formData, accountType: value })}
-								>
-									<SelectTrigger id={accountTypeId}>
-										<SelectValue placeholder={t('accounts.type_placeholder')} />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="checking">{t('accounts.type_checking')}</SelectItem>
-										<SelectItem value="savings">{t('accounts.type_savings')}</SelectItem>
-										<SelectItem value="business">{t('accounts.type_business')}</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div className="space-y-2">
-								<Label htmlFor={initialDepositId}>{t('accounts.deposit_label')} *</Label>
-								<div className="relative">
-									<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+							<FieldGroup>
+								<Field data-invalid={!!errors.accountName}>
+									<FieldLabel>{t('accounts.name_label')} *</FieldLabel>
 									<Input
-										id={initialDepositId}
-										type="number"
-										step="0.01"
-										min="0"
-										placeholder="0.00"
-										className="pl-7"
-										value={formData.initialDeposit}
-										onChange={(e) => setFormData({ ...formData, initialDeposit: e.target.value })}
+										placeholder={t('accounts.name_placeholder')}
+										{...register('accountName', { required: t('validation.required') })}
 									/>
-								</div>
-							</div>
+									<FieldError errors={[errors.accountName]} />
+								</Field>
+
+								<Field data-invalid={!!errors.accountType}>
+									<FieldLabel>{t('accounts.type_label')} *</FieldLabel>
+									<Controller
+										name="accountType"
+										control={control}
+										rules={{ required: t('validation.required') }}
+										render={({ field }) => (
+											<Select value={field.value ?? ''} onValueChange={field.onChange} onOpenChange={(open) => { if (!open) field.onBlur(); }}>
+												<SelectTrigger>
+													<SelectValue placeholder={t('accounts.type_placeholder')} />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="checking">{t('accounts.type_checking')}</SelectItem>
+													<SelectItem value="savings">{t('accounts.type_savings')}</SelectItem>
+													<SelectItem value="business">{t('accounts.type_business')}</SelectItem>
+												</SelectContent>
+											</Select>
+										)}
+									/>
+									<FieldError errors={[errors.accountType]} />
+								</Field>
+
+								<Field data-invalid={!!errors.initialDeposit}>
+									<FieldLabel>{t('accounts.deposit_label')} *</FieldLabel>
+									<div className="relative">
+										<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+										<Input
+											type="number"
+											step="0.01"
+											min="0"
+											placeholder="0.00"
+											className="pl-7"
+											{...register('initialDeposit', {
+												required: t('validation.required'),
+												min: { value: 0, message: t('validation.deposit_min') },
+											})}
+										/>
+									</div>
+									<FieldError errors={[errors.initialDeposit]} />
+								</Field>
+							</FieldGroup>
 
 							<div className="flex gap-3 pt-4">
 								<Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>

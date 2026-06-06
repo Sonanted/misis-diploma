@@ -1,9 +1,11 @@
 import { LogOut, Monitor, Moon, Save, Sun } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { useLanguage } from '@/shared/ui/language-switcher-compact';
@@ -43,6 +45,20 @@ function useTheme() {
 	return { theme, setTheme };
 }
 
+type PersonalInfoValues = {
+	firstName: string;
+	lastName: string;
+	middleName: string;
+	email: string;
+	phone: string;
+};
+
+type PasswordValues = {
+	currentPassword: string;
+	newPassword: string;
+	confirmPassword: string;
+};
+
 export function Settings() {
 	const { t } = useTranslation();
 	const { theme, setTheme } = useTheme();
@@ -59,57 +75,36 @@ export function Settings() {
 		{ code: 'ru' as const, label: 'Русский' },
 	];
 
-	const firstNameId = useId();
-	const lastNameId = useId();
-	const middleNameId = useId();
-	const emailId = useId();
-	const phoneId = useId();
 	const pwdId = useId();
 
-	const [personalInfo, setPersonalInfo] = useState({
-		firstName: 'John',
-		middleName: 'Alexander',
-		lastName: 'Doe',
-		email: 'john.doe@email.com',
-		phone: '+79997732136',
+	const personalForm = useForm<PersonalInfoValues>({
+		mode: 'onBlur',
+		defaultValues: {
+			firstName: 'John',
+			middleName: 'Alexander',
+			lastName: 'Doe',
+			email: 'john.doe@email.com',
+			phone: '+79997732136',
+		},
 	});
 
-	const [passwordData, setPasswordData] = useState({
-		currentPassword: '',
-		newPassword: '',
-		confirmPassword: '',
-	});
+	const passwordForm = useForm<PasswordValues>({ mode: 'onBlur' });
 
-	const handlePersonalInfoSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (
-			!personalInfo.firstName ||
-			!personalInfo.lastName ||
-			!personalInfo.email ||
-			!personalInfo.phone
-		) {
-			toast.error(t('settings.toast_fill_required'));
-			return;
-		}
+	const handlePersonalInfoSubmit = (data: PersonalInfoValues) => {
+		// biome-ignore lint/suspicious/noConsole: temporary
+		console.log('settings personal', data);
 		toast.success(t('settings.toast_personal_saved'));
 	};
 
-	const handlePasswordSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-			toast.error(t('settings.toast_password_fill'));
-			return;
-		}
-		if (passwordData.newPassword !== passwordData.confirmPassword) {
-			toast.error(t('settings.toast_password_mismatch'));
-			return;
-		}
-		if (passwordData.newPassword.length < 8) {
-			toast.error(t('settings.toast_password_short'));
+	const handlePasswordSubmit = (data: PasswordValues) => {
+		// biome-ignore lint/suspicious/noConsole: temporary
+		console.log('settings password', data);
+		if (data.newPassword !== data.confirmPassword) {
+			passwordForm.setError('confirmPassword', { message: t('validation.password_mismatch') });
 			return;
 		}
 		toast.success(t('settings.toast_password_saved'));
-		setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+		passwordForm.reset();
 	};
 
 	return (
@@ -121,61 +116,67 @@ export function Settings() {
 						<p className="text-muted-foreground">{t('settings.description')}</p>
 					</div>
 
+					{/* Personal info */}
 					<Card>
 						<CardHeader>
 							<CardTitle>{t('settings.personal_info_title')}</CardTitle>
 							<CardDescription>{t('settings.personal_info_description')}</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<form onSubmit={handlePersonalInfoSubmit} className="space-y-4">
-								<div className="space-y-2">
-									<Label htmlFor={firstNameId}>{t('settings.first_name')} *</Label>
-									<Input
-										id={firstNameId}
-										value={personalInfo.firstName}
-										onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
-									/>
-								</div>
+							<form onSubmit={personalForm.handleSubmit(handlePersonalInfoSubmit)} className="space-y-4">
+								<FieldGroup>
+									<Field data-invalid={!!personalForm.formState.errors.firstName}>
+										<FieldLabel>{t('settings.first_name')} *</FieldLabel>
+										<Input {...personalForm.register('firstName', { required: t('validation.required') })} />
+										<FieldError errors={[personalForm.formState.errors.firstName]} />
+									</Field>
 
-								<div className="space-y-2">
-									<Label htmlFor={lastNameId}>{t('settings.last_name')} *</Label>
-									<Input
-										id={lastNameId}
-										value={personalInfo.lastName}
-										onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
-									/>
-								</div>
+									<Field data-invalid={!!personalForm.formState.errors.lastName}>
+										<FieldLabel>{t('settings.last_name')} *</FieldLabel>
+										<Input {...personalForm.register('lastName', { required: t('validation.required') })} />
+										<FieldError errors={[personalForm.formState.errors.lastName]} />
+									</Field>
 
-								<div className="space-y-2">
-									<Label htmlFor={middleNameId}>{t('settings.middle_name')}</Label>
-									<Input
-										id={middleNameId}
-										value={personalInfo.middleName}
-										onChange={(e) => setPersonalInfo({ ...personalInfo, middleName: e.target.value })}
-									/>
-								</div>
+									<Field>
+										<FieldLabel>{t('settings.middle_name')}</FieldLabel>
+										<Input {...personalForm.register('middleName')} />
+									</Field>
 
-								<div className="space-y-2">
-									<Label htmlFor={emailId}>{t('settings.email')} *</Label>
-									<Input
-										id={emailId}
-										type="email"
-										value={personalInfo.email}
-										onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
-									/>
-								</div>
+									<Field data-invalid={!!personalForm.formState.errors.email}>
+										<FieldLabel>{t('settings.email')} *</FieldLabel>
+										<Input
+											type="email"
+											{...personalForm.register('email', {
+												required: t('validation.required'),
+												pattern: {
+													value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+													message: t('validation.email_invalid'),
+												},
+											})}
+										/>
+										<FieldError errors={[personalForm.formState.errors.email]} />
+									</Field>
 
-								<div className="space-y-2">
-									<Label htmlFor={phoneId}>{t('settings.phone')} *</Label>
-									<PhoneInput
-										id={phoneId}
-										value={personalInfo.phone}
-										onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target?.value ?? '' })}
-										international
-										placeholder={t('auth.login.phone_placeholder')}
-										required
-									/>
-								</div>
+									<Field data-invalid={!!personalForm.formState.errors.phone}>
+										<FieldLabel>{t('settings.phone')} *</FieldLabel>
+										<Controller
+											name="phone"
+											control={personalForm.control}
+											rules={{ required: t('validation.required') }}
+											render={({ field }) => (
+												<PhoneInput
+													id={`${pwdId}-phone`}
+													value={field.value ?? ''}
+													onChange={field.onChange}
+													onBlur={field.onBlur}
+													international
+													placeholder={t('auth.login.phone_placeholder')}
+												/>
+											)}
+										/>
+										<FieldError errors={[personalForm.formState.errors.phone]} />
+									</Field>
+								</FieldGroup>
 
 								<div className="pt-4">
 									<Button type="submit" className="w-full">
@@ -187,43 +188,53 @@ export function Settings() {
 						</CardContent>
 					</Card>
 
+					{/* Change password */}
 					<Card>
 						<CardHeader>
 							<CardTitle>{t('settings.password_title')}</CardTitle>
 							<CardDescription>{t('settings.password_description')}</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<form onSubmit={handlePasswordSubmit} className="space-y-4">
-								<div className="space-y-2">
-									<Label htmlFor={`${pwdId}-current`}>{t('settings.current_password')} *</Label>
-									<Input
-										id={`${pwdId}-current`}
-										type="password"
-										value={passwordData.currentPassword}
-										onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-									/>
-								</div>
+							<form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+								<FieldGroup>
+									<Field data-invalid={!!passwordForm.formState.errors.currentPassword}>
+										<FieldLabel>{t('settings.current_password')} *</FieldLabel>
+										<Input
+											id={`${pwdId}-current`}
+											type="password"
+											{...passwordForm.register('currentPassword', { required: t('validation.required') })}
+										/>
+										<FieldError errors={[passwordForm.formState.errors.currentPassword]} />
+									</Field>
 
-								<div className="space-y-2">
-									<Label htmlFor={`${pwdId}-new`}>{t('settings.new_password')} *</Label>
-									<Input
-										id={`${pwdId}-new`}
-										type="password"
-										value={passwordData.newPassword}
-										onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-									/>
-									<p className="text-xs text-muted-foreground">{t('settings.password_hint')}</p>
-								</div>
+									<Field data-invalid={!!passwordForm.formState.errors.newPassword}>
+										<FieldLabel>{t('settings.new_password')} *</FieldLabel>
+										<Input
+											id={`${pwdId}-new`}
+											type="password"
+											{...passwordForm.register('newPassword', {
+												required: t('validation.required'),
+												minLength: { value: 8, message: t('validation.password_min') },
+											})}
+										/>
+										<p className="text-xs text-muted-foreground">{t('settings.password_hint')}</p>
+										<FieldError errors={[passwordForm.formState.errors.newPassword]} />
+									</Field>
 
-								<div className="space-y-2">
-									<Label htmlFor={`${pwdId}-confirm`}>{t('settings.confirm_password')} *</Label>
-									<Input
-										id={`${pwdId}-confirm`}
-										type="password"
-										value={passwordData.confirmPassword}
-										onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-									/>
-								</div>
+									<Field data-invalid={!!passwordForm.formState.errors.confirmPassword}>
+										<FieldLabel>{t('settings.confirm_password')} *</FieldLabel>
+										<Input
+											id={`${pwdId}-confirm`}
+											type="password"
+											{...passwordForm.register('confirmPassword', {
+												required: t('validation.required'),
+												validate: (v) =>
+													v === passwordForm.watch('newPassword') || t('validation.password_mismatch'),
+											})}
+										/>
+										<FieldError errors={[passwordForm.formState.errors.confirmPassword]} />
+									</Field>
+								</FieldGroup>
 
 								<div className="pt-4">
 									<Button type="submit" className="w-full">
@@ -235,6 +246,7 @@ export function Settings() {
 						</CardContent>
 					</Card>
 
+					{/* Appearance */}
 					<Card>
 						<CardHeader>
 							<CardTitle>{t('settings.appearance_title')}</CardTitle>

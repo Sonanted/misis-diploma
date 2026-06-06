@@ -1,37 +1,43 @@
-import { type SubmitEvent, useId } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/shared/ui/button';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/shared/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { PhoneInput } from '@/shared/ui/phone-input';
 
-export function PhoneStep({
-	phone,
-	setPhone,
-	onSubmit,
-}: {
-	phone: string;
-	setPhone: (v: string) => void;
-	onSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
-}) {
+type PhoneFormValues = { phone: string };
+
+export function PhoneStep({ onSubmit }: { onSubmit: (data: PhoneFormValues) => void }) {
 	const { t } = useTranslation();
-	const phoneInputId = useId();
+	const {
+		control,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<PhoneFormValues>({ mode: 'onBlur' });
+
 	return (
-		<form onSubmit={onSubmit}>
+		<form onSubmit={handleSubmit(onSubmit)}>
 			<FieldGroup>
-				<Field>
-					<FieldLabel htmlFor={phoneInputId}>
+				<Field data-invalid={!!errors.phone}>
+					<FieldLabel>
 						{t('auth.forgot_password.phone')} <span className="text-destructive">*</span>
 					</FieldLabel>
-					<PhoneInput
-						id={phoneInputId}
-						value={phone}
-						onChange={setPhone}
-						international
-						defaultCountry="RU"
-						placeholder={t('auth.forgot_password.phone_placeholder')}
-						required
+					<Controller
+						name="phone"
+						control={control}
+						rules={{ required: t('validation.required') }}
+						render={({ field }) => (
+							<PhoneInput
+								value={field.value ?? ''}
+								onChange={field.onChange}
+								onBlur={field.onBlur}
+								international
+								defaultCountry="RU"
+								placeholder={t('auth.forgot_password.phone_placeholder')}
+							/>
+						)}
 					/>
+					<FieldError errors={[errors.phone]} />
 				</Field>
 				<Field>
 					<Button type="submit">{t('auth.forgot_password.send_code')}</Button>

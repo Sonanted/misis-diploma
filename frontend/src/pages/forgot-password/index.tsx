@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { type SubmitEvent, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CodeStep } from '@/features/auth/forgot-password/CodeStep';
@@ -10,30 +10,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 export default function ForgotPassword({ ...props }: ComponentProps<typeof Card>) {
 	const { t } = useTranslation();
 	const [step, setStep] = useState(1);
-	const [phone, setPhone] = useState('');
-	const [code, setCode] = useState('');
-	const [newPassword, setNewPassword] = useState('');
 
-	// Step 1: send code
-	const handleSendCode = (e: SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		// Simulate sending code
+	const handleSendCode = (data: { phone: string }) => {
+		// biome-ignore lint/suspicious/noConsole: temporary
+		console.log('forgot-password step 1', data);
 		const confirmCode = Math.floor(100000 + Math.random() * 900000).toString();
-		toast.success(`Confirmation code: ${confirmCode}`);
+		toast.success(`${data.phone} — confirmation code: ${confirmCode}`);
 		setStep(2);
 	};
 
-	// Step 2: verify code
-	const handleVerifyCode = (e: SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		// TODO: verify code
+	const handleVerifyCode = (data: { code: string }) => {
+		// biome-ignore lint/suspicious/noConsole: temporary
+		console.log('forgot-password step 2', data);
 		setStep(3);
 	};
 
-	// Step 3: reset password
-	const handleResetPassword = (e: SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		// TODO: reset password
+	const handleResetPassword = (data: { newPassword: string }) => {
+		// biome-ignore lint/suspicious/noConsole: temporary
+		console.log('forgot-password step 3', data);
 		alert('Password reset!');
 	};
 
@@ -50,15 +44,9 @@ export default function ForgotPassword({ ...props }: ComponentProps<typeof Card>
 				<CardDescription>{stepDescriptions[step]}</CardDescription>
 			</CardHeader>
 			<CardContent>
-				{step === 1 && <PhoneStep phone={phone} setPhone={setPhone} onSubmit={handleSendCode} />}
-				{step === 2 && <CodeStep code={code} setCode={setCode} onSubmit={handleVerifyCode} />}
-				{step === 3 && (
-					<PasswordStep
-						newPassword={newPassword}
-						setNewPassword={setNewPassword}
-						onSubmit={handleResetPassword}
-					/>
-				)}
+				{step === 1 && <PhoneStep onSubmit={handleSendCode} />}
+				{step === 2 && <CodeStep onSubmit={handleVerifyCode} />}
+				{step === 3 && <PasswordStep onSubmit={handleResetPassword} />}
 			</CardContent>
 		</Card>
 	);

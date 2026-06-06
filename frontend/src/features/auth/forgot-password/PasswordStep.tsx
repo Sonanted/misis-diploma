@@ -1,37 +1,37 @@
-import { type SubmitEvent, useId } from 'react';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/shared/ui/button';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/shared/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 
-export function PasswordStep({
-	newPassword,
-	setNewPassword,
-	onSubmit,
-}: {
-	newPassword: string;
-	setNewPassword: (v: string) => void;
-	onSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
-}) {
+type PasswordFormValues = { newPassword: string };
+
+export function PasswordStep({ onSubmit }: { onSubmit: (data: PasswordFormValues) => void }) {
 	const { t } = useTranslation();
-	const passwordInputId = useId();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<PasswordFormValues>({ mode: 'onBlur' });
+
 	return (
-		<form onSubmit={onSubmit}>
+		<form onSubmit={handleSubmit(onSubmit)}>
 			<FieldGroup>
-				<Field>
-					<FieldLabel htmlFor={passwordInputId}>
+				<Field data-invalid={!!errors.newPassword}>
+					<FieldLabel>
 						{t('auth.forgot_password.new_password')} <span className="text-destructive">*</span>
 					</FieldLabel>
 					<Input
-						id={passwordInputId}
 						type="password"
 						placeholder={t('auth.forgot_password.new_password_placeholder')}
-						value={newPassword}
-						onChange={(e) => setNewPassword(e.target.value)}
-						required
+						{...register('newPassword', {
+							required: t('validation.required'),
+							minLength: { value: 8, message: t('validation.password_min') },
+						})}
 					/>
 					<FieldDescription>{t('auth.forgot_password.password_hint')}</FieldDescription>
+					<FieldError errors={[errors.newPassword]} />
 				</Field>
 				<Field>
 					<Button type="submit">{t('auth.forgot_password.reset_password')}</Button>
