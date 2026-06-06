@@ -5,10 +5,9 @@ import {
 	TerminalIcon,
 	TerminalSquareIcon,
 } from 'lucide-react';
-import { type ComponentProps, useState } from 'react';
+import type { ComponentProps } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { NavMain } from './nav-main';
-import { NavUser } from './nav-user';
 import {
 	Sidebar,
 	SidebarContent,
@@ -17,38 +16,24 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from '@/shared/ui/sidebar';
+import { NavMain } from './nav-main';
+import { NavUser } from './nav-user';
 
-const data = {
-	user: {
-		name: 'shadcn',
-		email: 'm@example.com',
-		avatar: '/avatars/shadcn.jpg',
-	},
-	navMain: [
-		{
-			title: 'Dashboard',
-			url: '/',
-			icon: <TerminalSquareIcon />,
-		},
-		{
-			title: 'Cards',
-			url: '/cards',
-			icon: <CreditCardIcon />,
-		},
-		{
-			title: 'Operations',
-			url: '/operations',
-			icon: <BotIcon />,
-		},
-		{
-			title: 'Payments',
-			url: '/payments',
-			icon: <BookOpenIcon />,
-		},
-	],
+const user = {
+	name: 'shadcn',
+	email: 'm@example.com',
+	avatar: '/avatars/shadcn.jpg',
 };
+
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
-	const [activeUrl, setActiveUrl] = useState('/');
+	const { t } = useTranslation();
+
+	const navItems = [
+		{ title: t('sidebar.dashboard'), url: '/', icon: <TerminalSquareIcon /> },
+		{ title: t('sidebar.cards'), url: '/cards', icon: <CreditCardIcon /> },
+		{ title: t('sidebar.operations'), url: '/operations', icon: <BotIcon /> },
+		{ title: t('sidebar.payments'), url: '/payments', icon: <BookOpenIcon /> },
+	];
 
 	return (
 		<Sidebar variant="sidebar" {...props}>
@@ -60,7 +45,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 								<TerminalIcon className="size-4" />
 							</div>
 							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium text-lg">Yet Another Bank</span>
+								<span className="truncate font-medium text-lg">{t('sidebar.app_name')}</span>
 							</div>
 						</div>
 					</SidebarMenuItem>
@@ -68,11 +53,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 			</SidebarHeader>
 
 			<SidebarContent>
-				<NavMain items={data.navMain} activeUrl={activeUrl} onItemClick={setActiveUrl} />
+				<NavMain items={navItems} activeUrl="/" onItemClick={() => {}} />
 			</SidebarContent>
 
 			<SidebarFooter className="border-t">
-				<NavUser user={data.user} />
+				<NavUser user={user} />
 			</SidebarFooter>
 		</Sidebar>
 	);

@@ -1,5 +1,6 @@
 import { ArrowRight, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { BalanceToggle } from '@/features/balance-visibility/balance-toggle';
@@ -103,8 +104,12 @@ const accounts = [
 ];
 
 export function AccountsList() {
+	const { t } = useTranslation();
 	const [open, setOpen] = useState(false);
 	const { balanceVisible, toggle } = usePrivacyStore();
+	const accountNameId = useId();
+	const accountTypeId = useId();
+	const initialDepositId = useId();
 	const [formData, setFormData] = useState({
 		accountName: '',
 		accountType: '',
@@ -115,11 +120,11 @@ export function AccountsList() {
 		e.preventDefault();
 
 		if (!formData.accountName || !formData.accountType || !formData.initialDeposit) {
-			toast.error('Please fill in all required fields');
+			toast.error(t('accounts.toast_fill_required'));
 			return;
 		}
 
-		toast.success('Account created successfully!', {
+		toast.success(t('accounts.create'), {
 			description: `${formData.accountName} has been created with $${parseFloat(formData.initialDeposit).toFixed(2)}`,
 		});
 
@@ -136,59 +141,59 @@ export function AccountsList() {
 			<div className="mb-6 flex items-start justify-between flex-wrap gap-y-3">
 				<div>
 					<div className="flex items-center gap-2 mb-2">
-						<h1 className="text-2xl sm:text-3xl font-semibold">Accounts</h1>
+						<h1 className="text-2xl sm:text-3xl font-semibold">{t('accounts.title')}</h1>
 						<BalanceToggle visible={balanceVisible} onToggle={toggle} />
 					</div>
-					<p className="text-muted-foreground">Manage your bank accounts</p>
+					<p className="text-muted-foreground">{t('accounts.description')}</p>
 				</div>
 				<Dialog open={open} onOpenChange={setOpen}>
 					<DialogTrigger
 						render={
 							<Button>
 								<Plus className="size-4 mr-2" />
-								Create Account
+								{t('accounts.create')}
 							</Button>
 						}
 					/>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Create New Account</DialogTitle>
-							<DialogDescription>Open a new bank account. Fill in the details below.</DialogDescription>
+							<DialogTitle>{t('accounts.dialog_title')}</DialogTitle>
+							<DialogDescription>{t('accounts.dialog_description')}</DialogDescription>
 						</DialogHeader>
 						<form onSubmit={handleSubmit} className="space-y-4">
 							<div className="space-y-2">
-								<Label htmlFor="accountName">Account Name *</Label>
+								<Label htmlFor={accountNameId}>{t('accounts.name_label')} *</Label>
 								<Input
-									id="accountName"
-									placeholder="e.g., My Savings Account"
+									id={accountNameId}
+									placeholder={t('accounts.name_placeholder')}
 									value={formData.accountName}
 									onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
 								/>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="accountType">Account Type *</Label>
+								<Label htmlFor={accountTypeId}>{t('accounts.type_label')} *</Label>
 								<Select
 									value={formData.accountType}
 									onValueChange={(value) => setFormData({ ...formData, accountType: value })}
 								>
-									<SelectTrigger id="accountType">
-										<SelectValue placeholder="Select account type" />
+									<SelectTrigger id={accountTypeId}>
+										<SelectValue placeholder={t('accounts.type_placeholder')} />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="checking">Checking</SelectItem>
-										<SelectItem value="savings">Savings</SelectItem>
-										<SelectItem value="business">Business</SelectItem>
+										<SelectItem value="checking">{t('accounts.type_checking')}</SelectItem>
+										<SelectItem value="savings">{t('accounts.type_savings')}</SelectItem>
+										<SelectItem value="business">{t('accounts.type_business')}</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="initialDeposit">Initial Deposit *</Label>
+								<Label htmlFor={initialDepositId}>{t('accounts.deposit_label')} *</Label>
 								<div className="relative">
 									<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
 									<Input
-										id="initialDeposit"
+										id={initialDepositId}
 										type="number"
 										step="0.01"
 										min="0"
@@ -202,10 +207,10 @@ export function AccountsList() {
 
 							<div className="flex gap-3 pt-4">
 								<Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>
-									Cancel
+									{t('accounts.cancel')}
 								</Button>
 								<Button type="submit" className="flex-1">
-									Create Account
+									{t('accounts.create')}
 								</Button>
 							</div>
 						</form>
@@ -233,7 +238,7 @@ export function AccountsList() {
 												? `$${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
 												: '$••••••'}
 										</p>
-										<p className="text-sm text-muted-foreground mt-1">Available Balance</p>
+										<p className="text-sm text-muted-foreground mt-1">{t('accounts.available_balance')}</p>
 									</div>
 									<ArrowRight className="size-5 text-muted-foreground shrink-0" />
 								</div>

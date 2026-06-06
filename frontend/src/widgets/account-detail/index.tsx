@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { CreditCard, FileText, PlusCircle, Send } from 'lucide-react';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { BalanceToggle } from '@/features/balance-visibility/balance-toggle';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
@@ -22,11 +23,6 @@ const TRANSACTION_TYPE = {
 type TransactionType = (typeof TRANSACTION_TYPE)[keyof typeof TRANSACTION_TYPE];
 
 type TypeFilter = 'all' | TransactionType;
-
-const TYPE_LABELS: Record<TransactionType, string> = {
-	top_up: 'Пополнение',
-	transfer: 'Перевод',
-};
 
 const accountsData = {
 	'1': {
@@ -142,28 +138,34 @@ const accountsData = {
 	},
 };
 
-const TYPE_FILTER_OPTIONS: { value: TypeFilter; label: string }[] = [
-	{ value: 'all', label: 'Все' },
-	{ value: TRANSACTION_TYPE.TopUp, label: 'Пополнения' },
-	{ value: TRANSACTION_TYPE.Transfer, label: 'Переводы' },
-];
-
 export function AccountDetail() {
+	const { t } = useTranslation();
 	const { id } = useParams<{ id: string }>();
 	const [detailsOpen, setDetailsOpen] = useState(false);
 	const { balanceVisible, toggle } = usePrivacyStore();
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 	const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
+	const TYPE_LABELS: Record<TransactionType, string> = {
+		top_up: t('account_detail.type_topup'),
+		transfer: t('account_detail.type_transfer'),
+	};
+
+	const TYPE_FILTER_OPTIONS: { value: TypeFilter; label: string }[] = [
+		{ value: 'all', label: t('account_detail.filter_all') },
+		{ value: TRANSACTION_TYPE.TopUp, label: t('account_detail.filter_topup') },
+		{ value: TRANSACTION_TYPE.Transfer, label: t('account_detail.filter_transfer') },
+	];
+
 	const account = id ? accountsData[id as keyof typeof accountsData] : null;
 
 	if (!account) {
 		return (
 			<NotFound
-				title="Счёт не найден"
-				description="Такого счёта не существует или он был удалён."
+				title={t('account_detail.not_found_title')}
+				description={t('account_detail.not_found_description')}
 				backTo="/accounts"
-				backLabel="К счетам"
+				backLabel={t('account_detail.back')}
 			/>
 		);
 	}
@@ -182,12 +184,12 @@ export function AccountDetail() {
 		setTypeFilter('all');
 	}
 
-	const transactionItems: TransactionItem[] = filteredTransactions.map((t) => ({
-		id: t.id,
-		date: t.date,
-		description: t.description,
-		amount: t.amount,
-		typeLabel: TYPE_LABELS[t.type],
+	const transactionItems: TransactionItem[] = filteredTransactions.map((tx) => ({
+		id: tx.id,
+		date: tx.date,
+		description: tx.description,
+		amount: tx.amount,
+		typeLabel: TYPE_LABELS[tx.type],
 	}));
 
 	return (
@@ -202,7 +204,7 @@ export function AccountDetail() {
 
 			<Card className="mb-6">
 				<CardHeader>
-					<CardTitle>Доступный баланс</CardTitle>
+					<CardTitle>{t('account_detail.available_balance')}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center gap-2">
@@ -221,42 +223,42 @@ export function AccountDetail() {
 				<Link to="/new-payment" className="w-full">
 					<Button className="w-full">
 						<Send className="size-4 mr-2" />
-						Перевести
+						{t('account_detail.transfer')}
 					</Button>
 				</Link>
 				<Button className="w-full">
 					<PlusCircle className="size-4 mr-2" />
-					Пополнить
+					{t('account_detail.topup')}
 				</Button>
 				<Button className="w-full" onClick={() => setDetailsOpen(true)}>
 					<FileText className="size-4 mr-2" />
-					Реквизиты
+					{t('account_detail.details')}
 				</Button>
 			</div>
 
 			<Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Реквизиты счёта</DialogTitle>
+						<DialogTitle>{t('account_detail.details_title')}</DialogTitle>
 					</DialogHeader>
 					<div className="space-y-4 pt-2">
 						<div>
-							<p className="text-sm text-muted-foreground">Номер счёта</p>
+							<p className="text-sm text-muted-foreground">{t('account_detail.account_number')}</p>
 							<p className="font-mono text-sm mt-0.5">{account.fullAccountNumber}</p>
 						</div>
 						<Separator />
 						<div>
-							<p className="text-sm text-muted-foreground">БИК</p>
+							<p className="text-sm text-muted-foreground">{t('account_detail.bik')}</p>
 							<p className="font-mono text-sm mt-0.5">{account.bik}</p>
 						</div>
 						<Separator />
 						<div>
-							<p className="text-sm text-muted-foreground">Корр. счёт</p>
+							<p className="text-sm text-muted-foreground">{t('account_detail.corr_account')}</p>
 							<p className="font-mono text-sm mt-0.5">{account.corrAccount}</p>
 						</div>
 						<Separator />
 						<div>
-							<p className="text-sm text-muted-foreground">Банк</p>
+							<p className="text-sm text-muted-foreground">{t('account_detail.bank')}</p>
 							<p className="text-sm mt-0.5">{account.bank}</p>
 						</div>
 					</div>
@@ -265,7 +267,7 @@ export function AccountDetail() {
 
 			<Card className="mb-6">
 				<CardHeader>
-					<CardTitle>Привязанные карты</CardTitle>
+					<CardTitle>{t('account_detail.linked_cards')}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-3">
@@ -298,7 +300,7 @@ export function AccountDetail() {
 			<Card>
 				<CardHeader>
 					<div className="flex items-center justify-between flex-wrap gap-y-2">
-						<CardTitle>Последние операции</CardTitle>
+						<CardTitle>{t('account_detail.recent_operations')}</CardTitle>
 						<div className="flex items-center gap-1">
 							<BalanceToggle visible={balanceVisible} onToggle={toggle} />
 							<TransactionFilter
@@ -317,7 +319,7 @@ export function AccountDetail() {
 				<CardContent>
 					<TransactionHistory
 						transactions={transactionItems}
-						getDetailUrl={(id) => `/operations/${id}`}
+						getDetailUrl={(txId) => `/operations/${txId}`}
 					/>
 				</CardContent>
 			</Card>

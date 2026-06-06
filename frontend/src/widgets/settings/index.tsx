@@ -1,10 +1,12 @@
 import { LogOut, Monitor, Moon, Save, Sun } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
+import { useLanguage } from '@/shared/ui/language-switcher-compact';
 import { PhoneInput } from '@/shared/ui/phone-input';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -41,72 +43,28 @@ function useTheme() {
 	return { theme, setTheme };
 }
 
-const LANGUAGES = [
-	{ code: 'en', label: 'English' },
-	{ code: 'ru', label: 'Русский' },
-] as const;
-
-type LangCode = (typeof LANGUAGES)[number]['code'];
-
-function useLanguage() {
-	const [lang, setLang] = useState<LangCode>(() => {
-		return (localStorage.getItem('i18n_language') as LangCode) ?? 'en';
-	});
-
-	const changeLanguage = (code: LangCode) => {
-		setLang(code);
-		localStorage.setItem('i18n_language', code);
-	};
-
-	return { lang, changeLanguage };
-}
-
-const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
-	{ value: 'light', label: 'Light', icon: Sun },
-	{ value: 'dark', label: 'Dark', icon: Moon },
-	{ value: 'system', label: 'System', icon: Monitor },
-];
-
-function ThemeSwitcher({ theme, onChange }: { theme: Theme; onChange: (t: Theme) => void }) {
-	return (
-		<div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-			{THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-				<Button
-					key={value}
-					type="button"
-					size="sm"
-					variant={theme === value ? 'default' : 'outline'}
-					onClick={() => onChange(value)}
-				>
-					<Icon className="size-3.5" />
-					{label}
-				</Button>
-			))}
-		</div>
-	);
-}
-
-function LanguageSelector({ lang, onChange }: { lang: LangCode; onChange: (c: LangCode) => void }) {
-	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-			{LANGUAGES.map(({ code, label }) => (
-				<Button
-					key={code}
-					type="button"
-					size="sm"
-					variant={lang === code ? 'default' : 'outline'}
-					onClick={() => onChange(code)}
-				>
-					{label}
-				</Button>
-			))}
-		</div>
-	);
-}
-
 export function Settings() {
+	const { t } = useTranslation();
 	const { theme, setTheme } = useTheme();
 	const { lang, changeLanguage } = useLanguage();
+
+	const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
+		{ value: 'light', label: t('settings.theme_light'), icon: Sun },
+		{ value: 'dark', label: t('settings.theme_dark'), icon: Moon },
+		{ value: 'system', label: t('settings.theme_system'), icon: Monitor },
+	];
+
+	const LANGUAGES = [
+		{ code: 'en' as const, label: 'English' },
+		{ code: 'ru' as const, label: 'Русский' },
+	];
+
+	const firstNameId = useId();
+	const lastNameId = useId();
+	const middleNameId = useId();
+	const emailId = useId();
+	const phoneId = useId();
+	const pwdId = useId();
 
 	const [personalInfo, setPersonalInfo] = useState({
 		firstName: 'John',
@@ -116,8 +74,6 @@ export function Settings() {
 		phone: '+79997732136',
 	});
 
-	const pwdId = useId();
-	const [passwordOpen, setPasswordOpen] = useState(false);
 	const [passwordData, setPasswordData] = useState({
 		currentPassword: '',
 		newPassword: '',
@@ -132,29 +88,28 @@ export function Settings() {
 			!personalInfo.email ||
 			!personalInfo.phone
 		) {
-			toast.error('Please fill in all required fields');
+			toast.error(t('settings.toast_fill_required'));
 			return;
 		}
-		toast.success('Personal information updated successfully!');
+		toast.success(t('settings.toast_personal_saved'));
 	};
 
 	const handlePasswordSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-			toast.error('Please fill in all password fields');
+			toast.error(t('settings.toast_password_fill'));
 			return;
 		}
 		if (passwordData.newPassword !== passwordData.confirmPassword) {
-			toast.error('New passwords do not match');
+			toast.error(t('settings.toast_password_mismatch'));
 			return;
 		}
 		if (passwordData.newPassword.length < 8) {
-			toast.error('Password must be at least 8 characters long');
+			toast.error(t('settings.toast_password_short'));
 			return;
 		}
-		toast.success('Password updated successfully!');
+		toast.success(t('settings.toast_password_saved'));
 		setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-		setPasswordOpen(false);
 	};
 
 	return (
@@ -162,48 +117,48 @@ export function Settings() {
 			<div className="p-8">
 				<div className="max-w-2xl mx-auto space-y-6">
 					<div>
-						<h1 className="text-3xl font-semibold mb-2">Settings</h1>
-						<p className="text-muted-foreground">Manage your account settings and preferences</p>
+						<h1 className="text-3xl font-semibold mb-2">{t('settings.title')}</h1>
+						<p className="text-muted-foreground">{t('settings.description')}</p>
 					</div>
 
 					<Card>
 						<CardHeader>
-							<CardTitle>Personal Information</CardTitle>
-							<CardDescription>Update your personal details</CardDescription>
+							<CardTitle>{t('settings.personal_info_title')}</CardTitle>
+							<CardDescription>{t('settings.personal_info_description')}</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<form onSubmit={handlePersonalInfoSubmit} className="space-y-4">
 								<div className="space-y-2">
-									<Label htmlFor="firstName">First Name *</Label>
+									<Label htmlFor={firstNameId}>{t('settings.first_name')} *</Label>
 									<Input
-										id="firstName"
+										id={firstNameId}
 										value={personalInfo.firstName}
 										onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
 									/>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="lastName">Last Name *</Label>
+									<Label htmlFor={lastNameId}>{t('settings.last_name')} *</Label>
 									<Input
-										id="lastName"
+										id={lastNameId}
 										value={personalInfo.lastName}
 										onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
 									/>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="middleName">Middle Name</Label>
+									<Label htmlFor={middleNameId}>{t('settings.middle_name')}</Label>
 									<Input
-										id="middleName"
+										id={middleNameId}
 										value={personalInfo.middleName}
 										onChange={(e) => setPersonalInfo({ ...personalInfo, middleName: e.target.value })}
 									/>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="email">Email *</Label>
+									<Label htmlFor={emailId}>{t('settings.email')} *</Label>
 									<Input
-										id="email"
+										id={emailId}
 										type="email"
 										value={personalInfo.email}
 										onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
@@ -211,13 +166,13 @@ export function Settings() {
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="phone">Phone Number *</Label>
+									<Label htmlFor={phoneId}>{t('settings.phone')} *</Label>
 									<PhoneInput
-										id="phone"
+										id={phoneId}
 										value={personalInfo.phone}
 										onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target?.value ?? '' })}
 										international
-										placeholder="Enter a phone number"
+										placeholder={t('auth.login.phone_placeholder')}
 										required
 									/>
 								</div>
@@ -225,7 +180,7 @@ export function Settings() {
 								<div className="pt-4">
 									<Button type="submit" className="w-full">
 										<Save className="size-4 mr-2" />
-										Save Changes
+										{t('settings.save')}
 									</Button>
 								</div>
 							</form>
@@ -234,15 +189,15 @@ export function Settings() {
 
 					<Card>
 						<CardHeader>
-							<CardTitle>Change Password</CardTitle>
-							<CardDescription>Update your password to keep your account secure</CardDescription>
+							<CardTitle>{t('settings.password_title')}</CardTitle>
+							<CardDescription>{t('settings.password_description')}</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<form onSubmit={handlePasswordSubmit} className="space-y-4">
 								<div className="space-y-2">
-									<Label htmlFor="currentPassword">Current Password *</Label>
+									<Label htmlFor={`${pwdId}-current`}>{t('settings.current_password')} *</Label>
 									<Input
-										id="currentPassword"
+										id={`${pwdId}-current`}
 										type="password"
 										value={passwordData.currentPassword}
 										onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
@@ -250,22 +205,20 @@ export function Settings() {
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="newPassword">New Password *</Label>
+									<Label htmlFor={`${pwdId}-new`}>{t('settings.new_password')} *</Label>
 									<Input
-										id="newPassword"
+										id={`${pwdId}-new`}
 										type="password"
 										value={passwordData.newPassword}
 										onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
 									/>
-									<p className="text-xs text-muted-foreground">
-										Password must be at least 8 characters long
-									</p>
+									<p className="text-xs text-muted-foreground">{t('settings.password_hint')}</p>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="confirmPassword">Confirm New Password *</Label>
+									<Label htmlFor={`${pwdId}-confirm`}>{t('settings.confirm_password')} *</Label>
 									<Input
-										id="confirmPassword"
+										id={`${pwdId}-confirm`}
 										type="password"
 										value={passwordData.confirmPassword}
 										onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
@@ -275,7 +228,7 @@ export function Settings() {
 								<div className="pt-4">
 									<Button type="submit" className="w-full">
 										<Save className="size-4 mr-2" />
-										Update Password
+										{t('settings.update_password')}
 									</Button>
 								</div>
 							</form>
@@ -284,25 +237,50 @@ export function Settings() {
 
 					<Card>
 						<CardHeader>
-							<CardTitle>Appearance</CardTitle>
-							<CardDescription>Customize how the app looks and feels</CardDescription>
+							<CardTitle>{t('settings.appearance_title')}</CardTitle>
+							<CardDescription>{t('settings.appearance_description')}</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-6">
 							<div className="space-y-2">
-								<Label>Theme</Label>
-								<ThemeSwitcher theme={theme} onChange={setTheme} />
+								<Label>{t('settings.theme')}</Label>
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+									{THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+										<Button
+											key={value}
+											type="button"
+											size="sm"
+											variant={theme === value ? 'default' : 'outline'}
+											onClick={() => setTheme(value)}
+										>
+											<Icon className="size-3.5" />
+											{label}
+										</Button>
+									))}
+								</div>
 							</div>
 
 							<div className="space-y-2">
-								<Label>Language</Label>
-								<LanguageSelector lang={lang} onChange={changeLanguage} />
+								<Label>{t('settings.language')}</Label>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+									{LANGUAGES.map(({ code, label }) => (
+										<Button
+											key={code}
+											type="button"
+											size="sm"
+											variant={lang === code ? 'default' : 'outline'}
+											onClick={() => changeLanguage(code)}
+										>
+											{label}
+										</Button>
+									))}
+								</div>
 							</div>
 						</CardContent>
 					</Card>
 
 					<Button type="button" variant="destructive" className="w-full">
 						<LogOut className="size-4 mr-2" />
-						Log Out
+						{t('settings.logout')}
 					</Button>
 				</div>
 			</div>

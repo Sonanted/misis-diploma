@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
 import { Badge } from '@/shared/ui/badge';
@@ -24,13 +25,15 @@ export function TransactionHistory({
 	transactions,
 	currency = '₽',
 	locale = 'ru-RU',
-	emptyMessage = 'Операции не найдены',
+	emptyMessage,
 	getDetailUrl,
 }: Props) {
+	const { t } = useTranslation();
 	const balanceVisible = usePrivacyStore((s) => s.balanceVisible);
+	const message = emptyMessage ?? t('transaction_history.empty');
 
 	if (transactions.length === 0) {
-		return <p className="text-sm text-muted-foreground text-center py-4">{emptyMessage}</p>;
+		return <p className="text-sm text-muted-foreground text-center py-4">{message}</p>;
 	}
 
 	return (

@@ -1,5 +1,6 @@
 import { CreditCard, Hash, Phone, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -11,6 +12,13 @@ import { Textarea } from '@/shared/ui/textarea';
 type PaymentMethod = 'account' | 'phone' | 'card' | null;
 
 export function NewPayment() {
+	const { t } = useTranslation();
+	const fromAccountId = useId();
+	const recipientId = useId();
+	const recipientIdentifierId = useId();
+	const amountId = useId();
+	const descriptionId = useId();
+
 	const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
 	const [formData, setFormData] = useState({
 		fromAccount: '',
@@ -44,13 +52,13 @@ export function NewPayment() {
 			!formData.recipientIdentifier ||
 			!formData.amount
 		) {
-			toast.error('Please fill in all required fields');
+			toast.error(t('payments.toast_fill_required'));
 			return;
 		}
 
 		const methodLabel =
 			selectedMethod === 'account' ? 'account' : selectedMethod === 'phone' ? 'phone number' : 'card';
-		toast.success('Payment sent successfully!', {
+		toast.success(t('payments.toast_success'), {
 			description: `$${parseFloat(formData.amount).toFixed(2)} sent to ${formData.recipient} via ${methodLabel}`,
 		});
 
@@ -60,11 +68,37 @@ export function NewPayment() {
 	const getPlaceholder = () => {
 		switch (selectedMethod) {
 			case 'account':
-				return 'Enter account number or IBAN';
+				return t('payments.account_placeholder');
 			case 'phone':
-				return 'Enter phone number (e.g., +1 234 567 8900)';
+				return t('payments.phone_placeholder');
 			case 'card':
-				return 'Enter card number (16 digits)';
+				return t('payments.card_placeholder');
+			default:
+				return '';
+		}
+	};
+
+	const getRecipientLabel = () => {
+		switch (selectedMethod) {
+			case 'account':
+				return t('payments.recipient_account');
+			case 'phone':
+				return t('payments.recipient_phone');
+			case 'card':
+				return t('payments.recipient_card');
+			default:
+				return '';
+		}
+	};
+
+	const getPayByTitle = () => {
+		switch (selectedMethod) {
+			case 'account':
+				return t('payments.pay_by_account');
+			case 'phone':
+				return t('payments.pay_by_phone');
+			case 'card':
+				return t('payments.pay_by_card');
 			default:
 				return '';
 		}
@@ -79,8 +113,8 @@ export function NewPayment() {
 			<div className="shrink-0 p-8 pb-6 border-b">
 				<div className="max-w-2xl mx-auto">
 					<div className="mb-6">
-						<h1 className="text-3xl font-semibold mb-2">New Payment</h1>
-						<p className="text-muted-foreground">Choose a payment method and send money</p>
+						<h1 className="text-3xl font-semibold mb-2">{t('payments.title')}</h1>
+						<p className="text-muted-foreground">{t('payments.description')}</p>
 					</div>
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -91,8 +125,8 @@ export function NewPayment() {
 						>
 							<Hash className="size-6" />
 							<div className="text-center">
-								<div className="font-semibold">Account Number</div>
-								<div className="text-xs opacity-80">IBAN or Account</div>
+								<div className="font-semibold">{t('payments.method_account')}</div>
+								<div className="text-xs opacity-80">{t('payments.method_account_sub')}</div>
 							</div>
 						</Button>
 
@@ -103,8 +137,8 @@ export function NewPayment() {
 						>
 							<Phone className="size-6" />
 							<div className="text-center">
-								<div className="font-semibold">Phone Number</div>
-								<div className="text-xs opacity-80">Instant Transfer</div>
+								<div className="font-semibold">{t('payments.method_phone')}</div>
+								<div className="text-xs opacity-80">{t('payments.method_phone_sub')}</div>
 							</div>
 						</Button>
 
@@ -115,8 +149,8 @@ export function NewPayment() {
 						>
 							<CreditCard className="size-6" />
 							<div className="text-center">
-								<div className="font-semibold">Card Number</div>
-								<div className="text-xs opacity-80">Debit or Credit</div>
+								<div className="font-semibold">{t('payments.method_card')}</div>
+								<div className="text-xs opacity-80">{t('payments.method_card_sub')}</div>
 							</div>
 						</Button>
 					</div>
@@ -128,23 +162,19 @@ export function NewPayment() {
 					{selectedMethod && (
 						<Card>
 							<CardHeader>
-								<CardTitle>
-									{selectedMethod === 'account' && 'Pay by Account Number'}
-									{selectedMethod === 'phone' && 'Pay by Phone Number'}
-									{selectedMethod === 'card' && 'Pay by Card Number'}
-								</CardTitle>
-								<CardDescription>Enter the payment information below</CardDescription>
+								<CardTitle>{getPayByTitle()}</CardTitle>
+								<CardDescription>{t('payments.form_description')}</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<form onSubmit={handleSubmit} className="space-y-6">
 									<div className="space-y-2">
-										<Label htmlFor="fromAccount">From Account *</Label>
+										<Label htmlFor={fromAccountId}>{t('payments.from_account')} *</Label>
 										<Select
 											value={formData.fromAccount}
 											onValueChange={(value) => setFormData({ ...formData, fromAccount: value || '' })}
 										>
-											<SelectTrigger id="fromAccount" className="w-full">
-												<SelectValue placeholder="Select account" />
+											<SelectTrigger id={fromAccountId} className="w-full">
+												<SelectValue placeholder={t('payments.from_account_placeholder')} />
 											</SelectTrigger>
 											<SelectContent>
 												<SelectItem value="checking">Checking Account (****3456) - $15,420.50</SelectItem>
@@ -155,46 +185,38 @@ export function NewPayment() {
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="recipient">Recipient Name *</Label>
+										<Label htmlFor={recipientId}>{t('payments.recipient')} *</Label>
 										<Input
-											id="recipient"
-											placeholder="Enter recipient name"
+											id={recipientId}
+											placeholder={t('payments.recipient_placeholder')}
 											value={formData.recipient}
 											onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
 										/>
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="recipientIdentifier">
-											{selectedMethod === 'account' && 'Recipient Account *'}
-											{selectedMethod === 'phone' && 'Recipient Phone Number *'}
-											{selectedMethod === 'card' && 'Recipient Card Number *'}
-										</Label>
+										<Label htmlFor={recipientIdentifierId}>{getRecipientLabel()} *</Label>
 										<Input
-											id="recipientIdentifier"
+											id={recipientIdentifierId}
 											type={getInputType()}
 											placeholder={getPlaceholder()}
 											value={formData.recipientIdentifier}
 											onChange={(e) => setFormData({ ...formData, recipientIdentifier: e.target.value })}
 										/>
 										{selectedMethod === 'phone' && (
-											<p className="text-xs text-muted-foreground">
-												The recipient will receive the payment to their default account
-											</p>
+											<p className="text-xs text-muted-foreground">{t('payments.phone_hint')}</p>
 										)}
 										{selectedMethod === 'card' && (
-											<p className="text-xs text-muted-foreground">
-												Payment will be sent to the account linked to this card
-											</p>
+											<p className="text-xs text-muted-foreground">{t('payments.card_hint')}</p>
 										)}
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="amount">Amount *</Label>
+										<Label htmlFor={amountId}>{t('payments.amount')} *</Label>
 										<div className="relative">
 											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
 											<Input
-												id="amount"
+												id={amountId}
 												type="number"
 												step="0.01"
 												min="0.01"
@@ -207,10 +229,10 @@ export function NewPayment() {
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="description">Description (Optional)</Label>
+										<Label htmlFor={descriptionId}>{t('payments.description_optional')}</Label>
 										<Textarea
-											id="description"
-											placeholder="Add a note about this payment"
+											id={descriptionId}
+											placeholder={t('payments.description_placeholder')}
 											rows={3}
 											value={formData.description}
 											onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -220,7 +242,7 @@ export function NewPayment() {
 									<div className="pt-4">
 										<Button type="submit" className="w-full" size="lg">
 											<Send className="size-4 mr-2" />
-											Send Payment
+											{t('payments.send')}
 										</Button>
 									</div>
 								</form>
@@ -232,11 +254,9 @@ export function NewPayment() {
 						<Card className="mt-6 bg-muted/50">
 							<CardContent className="p-4">
 								<p className="text-sm text-muted-foreground">
-									<strong>Note:</strong> Payments are processed immediately. Please verify all details before
-									sending.
-									{selectedMethod === 'phone' &&
-										" Phone number payments use the recipient's registered default account."}
-									{selectedMethod === 'card' && ' Card payments are sent to the linked bank account.'}
+									<strong>Note:</strong> {t('payments.note_base')}
+									{selectedMethod === 'phone' && t('payments.note_phone')}
+									{selectedMethod === 'card' && t('payments.note_card')}
 								</p>
 							</CardContent>
 						</Card>
@@ -245,7 +265,7 @@ export function NewPayment() {
 					{!selectedMethod && (
 						<Card className="bg-muted/50">
 							<CardContent className="p-8 text-center">
-								<p className="text-muted-foreground">Select a payment method above to get started</p>
+								<p className="text-muted-foreground">{t('payments.select_method')}</p>
 							</CardContent>
 						</Card>
 					)}

@@ -1,4 +1,5 @@
 import { type ComponentProps, useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { Button } from '@/shared/ui/button';
@@ -8,6 +9,7 @@ import { Input } from '@/shared/ui/input';
 import { PhoneInput } from '@/shared/ui/phone-input';
 
 export default function Signup({ ...props }: ComponentProps<typeof Card>) {
+	const { t } = useTranslation();
 	const [phoneNumber, setPhoneNumber] = useState('');
 
 	const firstNameInputId = useId();
@@ -20,29 +22,29 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 	return (
 		<Card {...props}>
 			<CardHeader>
-				<CardTitle>Create an account</CardTitle>
-				<CardDescription>Enter your information below to create your account</CardDescription>
+				<CardTitle>{t('auth.signup.title')}</CardTitle>
+				<CardDescription>{t('auth.signup.description')}</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<form>
 					<FieldGroup>
 						<Field>
 							<FieldLabel htmlFor={firstNameInputId}>
-								First name <span className="text-destructive">*</span>
+								{t('auth.signup.first_name')} <span className="text-destructive">*</span>
 							</FieldLabel>
 							<Input id={firstNameInputId} type="text" placeholder="John" required />
 						</Field>
 
 						<Field>
 							<FieldLabel htmlFor={lastNameInputId}>
-								Last Name <span className="text-destructive">*</span>
+								{t('auth.signup.last_name')} <span className="text-destructive">*</span>
 							</FieldLabel>
 							<Input id={lastNameInputId} type="text" placeholder="Doe" required />
 						</Field>
 
 						<Field>
 							<FieldLabel htmlFor={phoneInputId}>
-								Phone <span className="text-destructive">*</span>
+								{t('auth.signup.phone')} <span className="text-destructive">*</span>
 							</FieldLabel>
 							<PhoneInput
 								id={phoneInputId}
@@ -50,37 +52,37 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 								onChange={setPhoneNumber}
 								international
 								defaultCountry="RU"
-								placeholder="Enter a phone number"
+								placeholder={t('auth.login.phone_placeholder')}
 								required
 							/>
 						</Field>
 
 						<Field>
-							<FieldLabel htmlFor={emailInputId}>Email</FieldLabel>
-							<Input id={emailInputId} type="email" placeholder="m@example.com" />
+							<FieldLabel htmlFor={emailInputId}>{t('auth.signup.email')}</FieldLabel>
+							<Input id={emailInputId} type="email" placeholder={t('auth.signup.email_placeholder')} />
 						</Field>
 
 						<Field>
 							<FieldLabel htmlFor={passwordInputId}>
-								Password <span className="text-destructive">*</span>
+								{t('auth.signup.password')} <span className="text-destructive">*</span>
 							</FieldLabel>
 							<Input id={passwordInputId} type="password" required />
-							<FieldDescription>Must be at least 8 characters long.</FieldDescription>
+							<FieldDescription>{t('auth.signup.password_hint')}</FieldDescription>
 						</Field>
 
 						<Field>
 							<FieldLabel htmlFor={confirmPasswordInputId}>
-								Confirm Password <span className="text-destructive">*</span>
+								{t('auth.signup.confirm_password')} <span className="text-destructive">*</span>
 							</FieldLabel>
 							<Input id={confirmPasswordInputId} type="password" required />
-							<FieldDescription>Please confirm your password.</FieldDescription>
+							<FieldDescription>{t('auth.signup.confirm_password_hint')}</FieldDescription>
 						</Field>
 
 						<Field>
-							<Button type="submit">Create Account</Button>
+							<Button type="submit">{t('auth.signup.submit')}</Button>
 
 							<FieldDescription className="px-6 text-center">
-								Already have an account? <Link to="/login">Sign in</Link>
+								{t('auth.signup.have_account')} <Link to="/login">{t('auth.signup.sign_in')}</Link>
 							</FieldDescription>
 						</Field>
 					</FieldGroup>

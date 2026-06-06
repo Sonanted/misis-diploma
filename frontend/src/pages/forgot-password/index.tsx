@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react';
 import { type SubmitEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CodeStep } from '@/features/auth/forgot-password/CodeStep';
 import { PasswordStep } from '@/features/auth/forgot-password/PasswordStep';
@@ -7,6 +8,7 @@ import { PhoneStep } from '@/features/auth/forgot-password/PhoneStep';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 
 export default function ForgotPassword({ ...props }: ComponentProps<typeof Card>) {
+	const { t } = useTranslation();
 	const [step, setStep] = useState(1);
 	const [phone, setPhone] = useState('');
 	const [code, setCode] = useState('');
@@ -35,15 +37,17 @@ export default function ForgotPassword({ ...props }: ComponentProps<typeof Card>
 		alert('Password reset!');
 	};
 
+	const stepDescriptions: Record<number, string> = {
+		1: t('auth.forgot_password.step1_description'),
+		2: t('auth.forgot_password.step2_description'),
+		3: t('auth.forgot_password.step3_description'),
+	};
+
 	return (
 		<Card {...props}>
 			<CardHeader>
-				<CardTitle>Forgot Password</CardTitle>
-				<CardDescription>
-					{step === 1 && 'Enter your phone number to receive a reset code.'}
-					{step === 2 && 'Enter the code sent to your phone.'}
-					{step === 3 && 'Set a new password for your account.'}
-				</CardDescription>
+				<CardTitle>{t('auth.forgot_password.title')}</CardTitle>
+				<CardDescription>{stepDescriptions[step]}</CardDescription>
 			</CardHeader>
 			<CardContent>
 				{step === 1 && <PhoneStep phone={phone} setPhone={setPhone} onSubmit={handleSendCode} />}

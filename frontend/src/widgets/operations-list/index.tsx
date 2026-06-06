@@ -1,4 +1,5 @@
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Badge } from '@/shared/ui/badge';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -80,11 +81,12 @@ const getOperationIcon = (type: string) => {
 };
 
 export function OperationsList() {
+	const { t } = useTranslation();
 	return (
 		<div className="p-8">
 			<div className="mb-6">
-				<h1 className="text-3xl font-semibold mb-2">Operations</h1>
-				<p className="text-muted-foreground">View all your transactions and transfers</p>
+				<h1 className="text-3xl font-semibold mb-2">{t('operations.title')}</h1>
+				<p className="text-muted-foreground">{t('operations.description')}</p>
 			</div>
 			<div className="grid gap-4">
 				{operations.map((operation) => (

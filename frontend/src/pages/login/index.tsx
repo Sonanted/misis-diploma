@@ -1,4 +1,5 @@
 import { type ComponentProps, useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { Button } from '@/shared/ui/button';
@@ -8,6 +9,7 @@ import { Input } from '@/shared/ui/input';
 import { PhoneInput } from '@/shared/ui/phone-input';
 
 export default function Login({ ...props }: ComponentProps<'div'>) {
+	const { t } = useTranslation();
 	const [phoneNumber, setPhoneNumber] = useState('');
 
 	const phoneInputId = useId();
@@ -16,23 +18,21 @@ export default function Login({ ...props }: ComponentProps<'div'>) {
 	return (
 		<Card {...props}>
 			<CardHeader>
-				<CardTitle>Login to your account</CardTitle>
-				<CardDescription>
-					Enter your phone number and password below to login to your account
-				</CardDescription>
+				<CardTitle>{t('auth.login.title')}</CardTitle>
+				<CardDescription>{t('auth.login.description')}</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<form>
 					<FieldGroup>
 						<Field>
-							<FieldLabel htmlFor={phoneInputId}>Phone</FieldLabel>
+							<FieldLabel htmlFor={phoneInputId}>{t('auth.login.phone')}</FieldLabel>
 							<PhoneInput
 								id={phoneInputId}
 								value={phoneNumber}
 								onChange={setPhoneNumber}
 								international
 								defaultCountry="RU"
-								placeholder="Enter a phone number"
+								placeholder={t('auth.login.phone_placeholder')}
 								required
 							/>
 						</Field>
@@ -40,19 +40,19 @@ export default function Login({ ...props }: ComponentProps<'div'>) {
 						<Field>
 							<div className="flex items-center">
 								<FieldLabel htmlFor={passwordInputId} className="gap-1">
-									Password
+									{t('auth.login.password')}
 								</FieldLabel>
 							</div>
 							<Input id={passwordInputId} type="password" required />
 						</Field>
 						<Field>
-							<Button type="submit">Login</Button>
+							<Button type="submit">{t('auth.login.submit')}</Button>
 
 							<FieldDescription className="text-center">
-								<Link to="/forgot-password">Forgot your password?</Link>
+								<Link to="/forgot-password">{t('auth.login.forgot_password')}</Link>
 							</FieldDescription>
 							<FieldDescription className="text-center">
-								Don&apos;t have an account? <Link to="/signup">Sign up</Link>
+								{t('auth.login.no_account')} <Link to="/signup">{t('auth.login.sign_up')}</Link>
 							</FieldDescription>
 						</Field>
 					</FieldGroup>

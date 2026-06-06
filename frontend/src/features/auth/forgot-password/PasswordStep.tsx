@@ -1,4 +1,5 @@
 import { type SubmitEvent, useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/shared/ui/button';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -13,28 +14,29 @@ export function PasswordStep({
 	setNewPassword: (v: string) => void;
 	onSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
 }) {
+	const { t } = useTranslation();
 	const passwordInputId = useId();
 	return (
 		<form onSubmit={onSubmit}>
 			<FieldGroup>
 				<Field>
 					<FieldLabel htmlFor={passwordInputId}>
-						New Password <span className="text-destructive">*</span>
+						{t('auth.forgot_password.new_password')} <span className="text-destructive">*</span>
 					</FieldLabel>
 					<Input
 						id={passwordInputId}
 						type="password"
-						placeholder="Enter new password"
+						placeholder={t('auth.forgot_password.new_password_placeholder')}
 						value={newPassword}
 						onChange={(e) => setNewPassword(e.target.value)}
 						required
 					/>
-					<FieldDescription>Must be at least 8 characters long.</FieldDescription>
+					<FieldDescription>{t('auth.forgot_password.password_hint')}</FieldDescription>
 				</Field>
 				<Field>
-					<Button type="submit">Reset Password</Button>
+					<Button type="submit">{t('auth.forgot_password.reset_password')}</Button>
 					<FieldDescription className="px-6 text-center">
-						Remembered your password? <Link to="/login">Sign in</Link>
+						{t('auth.forgot_password.remembered')} <Link to="/login">{t('auth.forgot_password.sign_in')}</Link>
 					</FieldDescription>
 				</Field>
 			</FieldGroup>

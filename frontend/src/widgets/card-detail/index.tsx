@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
-import { CreditCard as CreditCardIcon, Eye, EyeOff, ExternalLink, Lock, Trash2 } from 'lucide-react';
+import { CreditCard as CreditCardIcon, ExternalLink, Eye, EyeOff, Lock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { BalanceToggle } from '@/features/balance-visibility/balance-toggle';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
@@ -72,6 +73,7 @@ const cardsData = {
 };
 
 export function CardDetail() {
+	const { t } = useTranslation();
 	const { id } = useParams<{ id: string }>();
 	const { balanceVisible, toggle } = usePrivacyStore();
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -81,10 +83,10 @@ export function CardDetail() {
 	if (!card) {
 		return (
 			<NotFound
-				title="Card Not Found"
-				description="The card you're looking for doesn't exist or has been removed."
+				title={t('cards.not_found_title')}
+				description={t('cards.not_found_description')}
 				backTo="/cards"
-				backLabel="Go to Cards"
+				backLabel={t('cards.back')}
 			/>
 		);
 	}
@@ -95,19 +97,19 @@ export function CardDetail() {
 		setDateRange(undefined);
 	}
 
-	const filteredTransactions = card.transactions.filter((t) => {
-		if (dateRange?.from && t.date < format(dateRange.from, 'yyyy-MM-dd')) return false;
-		if (dateRange?.to && t.date > format(dateRange.to, 'yyyy-MM-dd')) return false;
+	const filteredTransactions = card.transactions.filter((tx) => {
+		if (dateRange?.from && tx.date < format(dateRange.from, 'yyyy-MM-dd')) return false;
+		if (dateRange?.to && tx.date > format(dateRange.to, 'yyyy-MM-dd')) return false;
 		return true;
 	});
 
 	// card sign convention: positive = charge (expense), negative = refund (income)
 	// TransactionItem convention: positive = income, negative = expense → negate
-	const transactionItems: TransactionItem[] = filteredTransactions.map((t) => ({
-		id: t.id,
-		date: t.date,
-		description: t.merchant,
-		amount: -t.amount,
+	const transactionItems: TransactionItem[] = filteredTransactions.map((tx) => ({
+		id: tx.id,
+		date: tx.date,
+		description: tx.merchant,
+		amount: -tx.amount,
 	}));
 
 	return (
@@ -175,7 +177,7 @@ export function CardDetail() {
 					<Card>
 						<CardHeader>
 							<CardTitle>
-								{card.type === 'Credit' ? 'Current Balance' : 'Available Balance'}
+								{card.type === 'Credit' ? t('cards.current_balance') : t('cards.available_balance')}
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -201,7 +203,7 @@ export function CardDetail() {
 					{card.type === 'Credit' && (
 						<Card>
 							<CardHeader>
-								<CardTitle>Credit Limit</CardTitle>
+								<CardTitle>{t('cards.credit_limit')}</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<p className="text-3xl sm:text-4xl font-bold">
@@ -225,18 +227,18 @@ export function CardDetail() {
 				</Link>
 				<Button variant="outline" className="flex-1">
 					<Lock className="size-4 mr-2" />
-					Lock Card
+					{t('cards.lock_card')}
 				</Button>
 				<Button variant="outline" className="flex-1">
 					<Trash2 className="size-4 mr-2" />
-					Cancel Card
+					{t('cards.cancel_card')}
 				</Button>
 			</div>
 
 			<Card>
 				<CardHeader>
 					<div className="flex items-center justify-between flex-wrap gap-y-2">
-						<CardTitle>Recent Transactions</CardTitle>
+						<CardTitle>{t('cards.recent_transactions')}</CardTitle>
 						<div className="flex items-center gap-1">
 							<BalanceToggle visible={balanceVisible} onToggle={toggle} />
 							<TransactionFilter
@@ -253,7 +255,7 @@ export function CardDetail() {
 						transactions={transactionItems}
 						currency="$"
 						locale="en-US"
-						getDetailUrl={(id) => `/operations/${id}`}
+						getDetailUrl={(txId) => `/operations/${txId}`}
 					/>
 				</CardContent>
 			</Card>

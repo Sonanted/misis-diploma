@@ -1,5 +1,6 @@
 import { ArrowRight, CreditCard, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { BalanceToggle } from '@/features/balance-visibility/balance-toggle';
@@ -143,8 +144,13 @@ const cards = [
 ];
 
 export function CardsList() {
+	const { t } = useTranslation();
 	const [open, setOpen] = useState(false);
 	const { balanceVisible, toggle } = usePrivacyStore();
+	const cardNameId = useId();
+	const cardTypeId = useId();
+	const linkedAccountId = useId();
+	const creditLimitId = useId();
 	const [formData, setFormData] = useState({
 		cardName: '',
 		cardType: '',
@@ -156,25 +162,20 @@ export function CardsList() {
 		e.preventDefault();
 
 		if (!formData.cardName || !formData.cardType || !formData.linkedAccount) {
-			toast.error('Please fill in all required fields');
+			toast.error(t('cards.toast_fill_required'));
 			return;
 		}
 
 		if (formData.cardType === 'credit' && !formData.creditLimit) {
-			toast.error('Please enter a credit limit for credit cards');
+			toast.error(t('cards.toast_fill_credit_limit'));
 			return;
 		}
 
-		toast.success('Card created successfully!', {
+		toast.success(t('cards.create'), {
 			description: `${formData.cardName} has been created and will arrive in 5-7 business days`,
 		});
 
-		setFormData({
-			cardName: '',
-			cardType: '',
-			linkedAccount: '',
-			creditLimit: '',
-		});
+		setFormData({ cardName: '', cardType: '', linkedAccount: '', creditLimit: '' });
 		setOpen(false);
 	};
 
@@ -183,62 +184,60 @@ export function CardsList() {
 			<div className="mb-6 flex items-start justify-between flex-wrap gap-y-3">
 				<div>
 					<div className="flex items-center gap-2 mb-2">
-						<h1 className="text-2xl sm:text-3xl font-semibold">Cards</h1>
+						<h1 className="text-2xl sm:text-3xl font-semibold">{t('cards.title')}</h1>
 						<BalanceToggle visible={balanceVisible} onToggle={toggle} />
 					</div>
-					<p className="text-muted-foreground">Manage your debit and credit cards</p>
+					<p className="text-muted-foreground">{t('cards.description')}</p>
 				</div>
 				<Dialog open={open} onOpenChange={setOpen}>
 					<DialogTrigger
 						render={
 							<Button>
 								<Plus className="size-4 mr-2" />
-								Create Card
+								{t('cards.create')}
 							</Button>
 						}
 					/>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Create New Card</DialogTitle>
-							<DialogDescription>
-								Request a new debit or credit card. Fill in the details below.
-							</DialogDescription>
+							<DialogTitle>{t('cards.dialog_title')}</DialogTitle>
+							<DialogDescription>{t('cards.dialog_description')}</DialogDescription>
 						</DialogHeader>
 						<form onSubmit={handleSubmit} className="space-y-4">
 							<div className="space-y-2">
-								<Label htmlFor="cardName">Card Name *</Label>
+								<Label htmlFor={cardNameId}>{t('cards.name_label')} *</Label>
 								<Input
-									id="cardName"
-									placeholder="e.g., My Travel Card"
+									id={cardNameId}
+									placeholder={t('cards.name_placeholder')}
 									value={formData.cardName}
 									onChange={(e) => setFormData({ ...formData, cardName: e.target.value })}
 								/>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="cardType">Card Type *</Label>
+								<Label htmlFor={cardTypeId}>{t('cards.type_label')} *</Label>
 								<Select
 									value={formData.cardType}
 									onValueChange={(value) => setFormData({ ...formData, cardType: value })}
 								>
-									<SelectTrigger id="cardType">
-										<SelectValue placeholder="Select card type" />
+									<SelectTrigger id={cardTypeId}>
+										<SelectValue placeholder={t('cards.type_placeholder')} />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="debit">Debit Card</SelectItem>
-										<SelectItem value="credit">Credit Card</SelectItem>
+										<SelectItem value="debit">{t('cards.type_debit')}</SelectItem>
+										<SelectItem value="credit">{t('cards.type_credit')}</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="linkedAccount">Linked Account *</Label>
+								<Label htmlFor={linkedAccountId}>{t('cards.account_label')} *</Label>
 								<Select
 									value={formData.linkedAccount}
 									onValueChange={(value) => setFormData({ ...formData, linkedAccount: value })}
 								>
-									<SelectTrigger id="linkedAccount">
-										<SelectValue placeholder="Select account" />
+									<SelectTrigger id={linkedAccountId}>
+										<SelectValue placeholder={t('cards.account_placeholder')} />
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="checking">Checking Account (****3456)</SelectItem>
@@ -250,11 +249,11 @@ export function CardsList() {
 
 							{formData.cardType === 'credit' && (
 								<div className="space-y-2">
-									<Label htmlFor="creditLimit">Credit Limit *</Label>
+									<Label htmlFor={creditLimitId}>{t('cards.limit_label')} *</Label>
 									<div className="relative">
 										<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
 										<Input
-											id="creditLimit"
+											id={creditLimitId}
 											type="number"
 											step="100"
 											min="500"
@@ -264,16 +263,16 @@ export function CardsList() {
 											onChange={(e) => setFormData({ ...formData, creditLimit: e.target.value })}
 										/>
 									</div>
-									<p className="text-xs text-muted-foreground">Minimum credit limit: $500</p>
+									<p className="text-xs text-muted-foreground">{t('cards.limit_hint')}</p>
 								</div>
 							)}
 
 							<div className="flex gap-3 pt-4">
 								<Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>
-									Cancel
+									{t('cards.cancel')}
 								</Button>
 								<Button type="submit" className="flex-1">
-									Create Card
+									{t('cards.create')}
 								</Button>
 							</div>
 						</form>
@@ -314,7 +313,7 @@ export function CardsList() {
 										<p className="text-sm text-muted-foreground mt-1 wrap-break-word">
 											{card.type === 'Credit'
 												? `${balanceVisible ? `$${(card.limit - card.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '$••••••'} available of $${card.limit.toLocaleString('en-US')}`
-												: 'Current Balance'}
+												: t('cards.current_balance')}
 										</p>
 									</div>
 									<ArrowRight className="size-5 text-muted-foreground shrink-0" />

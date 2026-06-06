@@ -1,4 +1,5 @@
 import { ArrowDownLeft, ArrowUpRight, Download, RefreshCw, Share2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { NotFound } from '@/pages/not-found';
 import { Badge } from '@/shared/ui/badge';
@@ -116,16 +117,17 @@ const getOperationIcon = (type: string) => {
 };
 
 export function OperationDetail() {
+	const { t } = useTranslation();
 	const { id } = useParams<{ id: string }>();
 	const operation = id ? operationsData[id as keyof typeof operationsData] : null;
 
 	if (!operation) {
 		return (
 			<NotFound
-				title="Operation Not Found"
-				description="This operation doesn't exist or has been removed."
+				title={t('operations.not_found_title')}
+				description={t('operations.not_found_description')}
 				backTo="/operations"
-				backLabel="Go to Operations"
+				backLabel={t('operations.back')}
 			/>
 		);
 	}
@@ -148,7 +150,7 @@ export function OperationDetail() {
 			<div className="grid gap-6 mb-6">
 				<Card>
 					<CardHeader>
-						<CardTitle>Transaction Amount</CardTitle>
+						<CardTitle>{t('operations.transaction_amount')}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<p
@@ -171,16 +173,16 @@ export function OperationDetail() {
 
 				<Card>
 					<CardHeader>
-						<CardTitle>Transaction Details</CardTitle>
+						<CardTitle>{t('operations.transaction_details')}</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div>
-								<p className="text-sm text-muted-foreground mb-1">Reference Number</p>
+								<p className="text-sm text-muted-foreground mb-1">{t('operations.reference_number')}</p>
 								<p className="font-mono text-sm">{operation.reference}</p>
 							</div>
 							<div>
-								<p className="text-sm text-muted-foreground mb-1">Category</p>
+								<p className="text-sm text-muted-foreground mb-1">{t('operations.category')}</p>
 								<Badge variant="outline">{operation.category}</Badge>
 							</div>
 						</div>
@@ -188,7 +190,7 @@ export function OperationDetail() {
 						<Separator />
 
 						<div>
-							<p className="text-sm text-muted-foreground mb-1">Account</p>
+							<p className="text-sm text-muted-foreground mb-1">{t('operations.account')}</p>
 							<p className="font-medium">{operation.account}</p>
 							<p className="font-mono text-sm text-muted-foreground">{operation.accountNumber}</p>
 						</div>
@@ -197,7 +199,7 @@ export function OperationDetail() {
 							<>
 								<Separator />
 								<div>
-									<p className="text-sm text-muted-foreground mb-1">From</p>
+									<p className="text-sm text-muted-foreground mb-1">{t('operations.from')}</p>
 									<p className="font-medium">{operation.sender}</p>
 									{operation.senderAccount && (
 										<p className="font-mono text-sm text-muted-foreground">{operation.senderAccount}</p>
@@ -210,7 +212,7 @@ export function OperationDetail() {
 							<>
 								<Separator />
 								<div>
-									<p className="text-sm text-muted-foreground mb-1">To</p>
+									<p className="text-sm text-muted-foreground mb-1">{t('operations.to')}</p>
 									<p className="font-medium">{operation.recipient}</p>
 									{operation.recipientAccount && (
 										<p className="font-mono text-sm text-muted-foreground">{operation.recipientAccount}</p>
@@ -223,7 +225,7 @@ export function OperationDetail() {
 							<>
 								<Separator />
 								<div>
-									<p className="text-sm text-muted-foreground mb-1">Notes</p>
+									<p className="text-sm text-muted-foreground mb-1">{t('operations.notes')}</p>
 									<p className="text-sm">{operation.notes}</p>
 								</div>
 							</>
@@ -235,11 +237,11 @@ export function OperationDetail() {
 			<div className="flex gap-3">
 				<Button variant="outline" className="flex-1">
 					<Download className="size-4 mr-2" />
-					Download Receipt
+					{t('operations.download_receipt')}
 				</Button>
 				<Button variant="outline" className="flex-1">
 					<Share2 className="size-4 mr-2" />
-					Share
+					{t('operations.share')}
 				</Button>
 			</div>
 		</div>

@@ -1,6 +1,7 @@
 import { ru } from 'date-fns/locale';
 import { SlidersHorizontal } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/utils';
 import { Button, buttonVariants } from '@/shared/ui/button';
 import { Calendar } from '@/shared/ui/calendar';
@@ -27,6 +28,7 @@ export function TransactionFilter({
 	isFiltered,
 	onReset,
 }: Props) {
+	const { t } = useTranslation();
 	return (
 		<Popover>
 			<PopoverTrigger className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'relative')}>
@@ -35,10 +37,10 @@ export function TransactionFilter({
 			</PopoverTrigger>
 			<PopoverContent align="end" className="w-auto p-0">
 				<div className="p-3 flex flex-col gap-3">
-					<p className="text-sm font-medium">Фильтры</p>
+					<p className="text-sm font-medium">{t('transaction_filter.title')}</p>
 
 					<div className="flex flex-col gap-1.5">
-						<p className="text-xs text-muted-foreground">Период</p>
+						<p className="text-xs text-muted-foreground">{t('transaction_filter.period')}</p>
 						<Calendar
 							mode="range"
 							locale={ru}
@@ -50,7 +52,7 @@ export function TransactionFilter({
 
 					{typeOptions && typeOptions.length > 0 && onTypeFilterChange && (
 						<div className="flex flex-col gap-1.5">
-							<p className="text-xs text-muted-foreground">Тип операции</p>
+							<p className="text-xs text-muted-foreground">{t('transaction_filter.operation_type')}</p>
 							<div className="flex gap-1">
 								{typeOptions.map((opt) => (
 									<Button
@@ -68,7 +70,7 @@ export function TransactionFilter({
 
 					{isFiltered && (
 						<Button variant="ghost" size="sm" className="w-full" onClick={onReset}>
-							Сбросить фильтры
+							{t('transaction_filter.reset')}
 						</Button>
 					)}
 				</div>
