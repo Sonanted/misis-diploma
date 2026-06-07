@@ -1,8 +1,8 @@
 import type { ComponentProps } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-
+import { Link, useNavigate } from 'react-router';
+import { useAuthStore } from '@/entities/user/model';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -16,6 +16,8 @@ type LoginFormValues = {
 
 export default function Login({ ...props }: ComponentProps<'div'>) {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const login = useAuthStore((state) => state.login);
 	const {
 		register,
 		control,
@@ -23,9 +25,9 @@ export default function Login({ ...props }: ComponentProps<'div'>) {
 		formState: { errors },
 	} = useForm<LoginFormValues>({ mode: 'onBlur' });
 
-	const onSubmit = (data: LoginFormValues) => {
-		// biome-ignore lint/suspicious/noConsole: temporary
-		console.log('login', data);
+	const onSubmit = (_data: LoginFormValues) => {
+		login();
+		navigate('/');
 	};
 
 	return (

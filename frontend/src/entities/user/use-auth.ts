@@ -1,4 +1,5 @@
+import { useAuthStore } from './model';
+
 export function useAuth() {
-	// TODO implement auth logic
-	return true;
+	return useAuthStore((state) => state.isAuthenticated);
 }

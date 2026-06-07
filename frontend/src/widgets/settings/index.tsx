@@ -2,7 +2,9 @@ import { LogOut, Monitor, Moon, Save, Sun } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/entities/user/model';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -61,8 +63,15 @@ type PasswordValues = {
 
 export function Settings() {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const logout = useAuthStore((state) => state.logout);
 	const { theme, setTheme } = useTheme();
 	const { lang, changeLanguage } = useLanguage();
+
+	const handleLogout = () => {
+		logout();
+		navigate('/login');
+	};
 
 	const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
 		{ value: 'light', label: t('settings.theme_light'), icon: Sun },
@@ -290,7 +299,7 @@ export function Settings() {
 						</CardContent>
 					</Card>
 
-					<Button type="button" variant="destructive" className="w-full">
+					<Button type="button" variant="destructive" className="w-full" onClick={handleLogout}>
 						<LogOut className="size-4 mr-2" />
 						{t('settings.logout')}
 					</Button>
