@@ -12,8 +12,10 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import type { IAuthRequest } from '../auth/interfaces/IAuthRequest';
+import { BANK_CONFIG } from './account.contants';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
+import { TopupAccountDto } from './dto/topup-account.dto';
 import { UpdateAccountNameDto } from './dto/update-account-name.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 
@@ -28,13 +30,34 @@ export class AccountsController {
 	}
 
 	@Get()
-	findAll() {
-		return this.accountService.findAll();
+	findAll(@Req() req: IAuthRequest) {
+		return this.accountService.findAll(req);
+	}
+
+	@Get('bank-info')
+	getBankInfo() {
+		return { bik: BANK_CONFIG.BIK, name: BANK_CONFIG.NAME };
 	}
 
 	@Get(':id')
 	findOne(@Req() req: IAuthRequest, @Param('id') id: string) {
 		return this.accountService.findOne(req, { id });
+	}
+
+	@Post(':id/topup')
+	topup(@Req() req: IAuthRequest, @Param('id') id: string, @Body() dto: TopupAccountDto) {
+		return this.accountService.topup(req, id, dto);
+	}
+
+	@Post(':id/monthly-payment')
+	monthlyPayment(@Req() req: IAuthRequest, @Param('id') id: string) {
+		return this.accountService.monthlyPayment(req, id);
+	}
+
+	@Patch(':id/primary')
+	@HttpCode(204)
+	setPrimary(@Req() req: IAuthRequest, @Param('id') id: string) {
+		return this.accountService.setPrimary(req, id);
 	}
 
 	@Patch(':id/name')

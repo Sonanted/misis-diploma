@@ -1,20 +1,12 @@
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { usePrivacyStore } from '@/features/balance-visibility/model';
-import { Badge } from '@/shared/ui/badge';
-import { Separator } from '@/shared/ui/separator';
-
-export type TransactionItem = {
-	id: string;
-	date: string;
-	description: string;
-	/** Positive = income (green), negative = expense */
-	amount: number;
-	typeLabel?: string;
-};
+import { format } from 'date-fns';
+import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
+import { TransactionListActions } from './transaction-list-actions';
+import { TransactionList, type TransactionItem } from './transaction-list';
 
 type Props = {
 	transactions: TransactionItem[];
+	typeOptions?: { value: string; label: string }[];
 	currency?: string;
 	locale?: string;
 	emptyMessage?: string;
@@ -23,57 +15,49 @@ type Props = {
 
 export function TransactionHistory({
 	transactions,
-	currency = '₽',
-	locale = 'ru-RU',
+	typeOptions,
+	currency,
+	locale,
 	emptyMessage,
 	getDetailUrl,
 }: Props) {
-	const { t } = useTranslation();
-	const balanceVisible = usePrivacyStore((s) => s.balanceVisible);
-	const message = emptyMessage ?? t('transaction_history.empty');
+	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+	const [typeFilter, setTypeFilter] = useState('all');
 
-	if (transactions.length === 0) {
-		return <p className="text-sm text-muted-foreground text-center py-4">{message}</p>;
-	}
+	const isFiltered = typeFilter !== 'all' || dateRange !== undefined;
+
+	const filtered = transactions.filter((tx) => {
+		if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+		if (dateRange?.from && tx.date < format(dateRange.from, 'yyyy-MM-dd')) return false;
+		if (dateRange?.to && tx.date > format(dateRange.to, 'yyyy-MM-dd')) return false;
+		return true;
+	});
+
+	const resetFilters = () => {
+		setDateRange(undefined);
+		setTypeFilter('all');
+	};
 
 	return (
-		<div className="space-y-4">
-			{transactions.map((transaction, index) => {
-				const url = getDetailUrl?.(transaction.id);
-				const content = (
-					<div>
-						<p className="font-medium">{transaction.description}</p>
-						{transaction.typeLabel && (
-							<Badge variant="secondary" className="text-xs mt-0.5">
-								{transaction.typeLabel}
-							</Badge>
-						)}
-						<div className="flex items-baseline justify-between flex-wrap gap-x-3 gap-y-0.5 mt-1">
-							<p className="text-sm text-muted-foreground">{transaction.date}</p>
-							<p
-								className={`font-semibold ml-auto ${transaction.amount > 0 ? 'text-green-600' : 'text-foreground'}`}
-							>
-								{balanceVisible
-									? `${transaction.amount > 0 ? '+' : '−'}${Math.abs(transaction.amount).toLocaleString(locale, { minimumFractionDigits: 2 })} ${currency}`
-									: `•••• ${currency}`}
-							</p>
-						</div>
-					</div>
-				);
-
-				return (
-					<div key={transaction.id}>
-						{index > 0 && <Separator className="mb-4" />}
-						{url ? (
-							<Link to={url} className="block hover:bg-accent -mx-3 px-3 py-1 rounded-md transition-colors">
-								{content}
-							</Link>
-						) : (
-							content
-						)}
-					</div>
-				);
-			})}
+		<div>
+			<div className="flex mb-1">
+				<TransactionListActions
+					dateRange={dateRange}
+					onDateRangeChange={setDateRange}
+					typeOptions={typeOptions}
+					typeFilter={typeFilter}
+					onTypeFilterChange={setTypeFilter}
+					isFiltered={isFiltered}
+					onReset={resetFilters}
+				/>
+			</div>
+			<TransactionList
+				transactions={filtered}
+				currency={currency}
+				locale={locale}
+				emptyMessage={emptyMessage}
+				getDetailUrl={getDetailUrl}
+			/>
 		</div>
 	);
 }

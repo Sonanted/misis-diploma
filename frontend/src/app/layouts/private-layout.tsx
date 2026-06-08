@@ -1,11 +1,12 @@
 import { Outlet } from 'react-router';
-
+import { useBankInfo } from '@/entities/account/queries';
 import { AppSidebar } from '@/widgets/sidebar/app-sidebar';
 import SidebarInsetHeader from '@/widgets/sidebar/sidebar-inset-header';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { SidebarInset, SidebarProvider } from '@/shared/ui/sidebar';
 
 export default function PrivateLayout() {
+	useBankInfo();
 	return (
 		<SidebarProvider>
 			<div className="flex w-full h-screen  bg-background text-foreground">

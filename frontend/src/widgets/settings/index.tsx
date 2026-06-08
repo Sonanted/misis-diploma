@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { LogOut, Monitor, Moon, Save, Sun } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -5,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/entities/user/model';
+import { useChangePassword, useMe, useUpdateMe } from '@/entities/user/queries';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -12,6 +14,7 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { useLanguage } from '@/shared/ui/language-switcher-compact';
 import { PhoneInput } from '@/shared/ui/phone-input';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -68,6 +71,10 @@ export function Settings() {
 	const { theme, setTheme } = useTheme();
 	const { lang, changeLanguage } = useLanguage();
 
+	const { data: me, isLoading: meLoading } = useMe();
+	const updateMe = useUpdateMe();
+	const changePassword = useChangePassword();
+
 	const handleLogout = () => {
 		logout();
 		navigate('/login');
@@ -86,34 +93,67 @@ export function Settings() {
 
 	const pwdId = useId();
 
-	const personalForm = useForm<PersonalInfoValues>({
-		mode: 'onBlur',
-		defaultValues: {
-			firstName: 'John',
-			middleName: 'Alexander',
-			lastName: 'Doe',
-			email: 'john.doe@email.com',
-			phone: '+79997732136',
-		},
-	});
-
+	const personalForm = useForm<PersonalInfoValues>({ mode: 'onBlur' });
 	const passwordForm = useForm<PasswordValues>({ mode: 'onBlur' });
 
+	useEffect(() => {
+		if (me) {
+			personalForm.reset({
+				firstName: me.firstName,
+				lastName: me.lastName,
+				middleName: me.middleName ?? '',
+				email: me.email,
+				phone: me.phone,
+			});
+		}
+	}, [me, personalForm.reset]);
+
+	const handlePersonalInfoError = (error: unknown) => {
+		if (!axios.isAxiosError(error)) {
+			toast.error(t('settings.toast_error'));
+			return;
+		}
+		const body = error.response?.data as
+			| { message?: { errors?: Record<string, string> } | string }
+			| undefined;
+		const fieldErrors =
+			body && typeof body.message === 'object' ? body.message?.errors : undefined;
+		if (fieldErrors?.email) personalForm.setError('email', { message: fieldErrors.email });
+		if (fieldErrors?.phone) personalForm.setError('phone', { message: fieldErrors.phone });
+		if (!fieldErrors) toast.error(t('settings.toast_error'));
+	};
+
 	const handlePersonalInfoSubmit = (data: PersonalInfoValues) => {
-		// biome-ignore lint/suspicious/noConsole: temporary
-		console.log('settings personal', data);
-		toast.success(t('settings.toast_personal_saved'));
+		updateMe.mutate(data, {
+			onSuccess: () => toast.success(t('settings.toast_personal_saved')),
+			onError: handlePersonalInfoError,
+		});
 	};
 
 	const handlePasswordSubmit = (data: PasswordValues) => {
-		// biome-ignore lint/suspicious/noConsole: temporary
-		console.log('settings password', data);
 		if (data.newPassword !== data.confirmPassword) {
 			passwordForm.setError('confirmPassword', { message: t('validation.password_mismatch') });
 			return;
 		}
-		toast.success(t('settings.toast_password_saved'));
-		passwordForm.reset();
+		changePassword.mutate(
+			{ currentPassword: data.currentPassword, newPassword: data.newPassword },
+			{
+				onSuccess: () => {
+					toast.success(t('settings.toast_password_saved'));
+					passwordForm.reset();
+				},
+				onError: (error) => {
+					const message = axios.isAxiosError(error)
+						? (error.response?.data?.message as string | undefined) ?? t('settings.toast_error')
+						: t('settings.toast_error');
+					if (error instanceof Error && axios.isAxiosError(error) && error.response?.status === 401) {
+						passwordForm.setError('currentPassword', { message });
+					} else {
+						toast.error(message);
+					}
+				},
+			},
+		);
 	};
 
 	return (
@@ -132,68 +172,77 @@ export function Settings() {
 							<CardDescription>{t('settings.personal_info_description')}</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<form onSubmit={personalForm.handleSubmit(handlePersonalInfoSubmit)} className="space-y-4">
-								<FieldGroup>
-									<Field data-invalid={!!personalForm.formState.errors.firstName}>
-										<FieldLabel>{t('settings.first_name')} *</FieldLabel>
-										<Input {...personalForm.register('firstName', { required: t('validation.required') })} />
-										<FieldError errors={[personalForm.formState.errors.firstName]} />
-									</Field>
-
-									<Field data-invalid={!!personalForm.formState.errors.lastName}>
-										<FieldLabel>{t('settings.last_name')} *</FieldLabel>
-										<Input {...personalForm.register('lastName', { required: t('validation.required') })} />
-										<FieldError errors={[personalForm.formState.errors.lastName]} />
-									</Field>
-
-									<Field>
-										<FieldLabel>{t('settings.middle_name')}</FieldLabel>
-										<Input {...personalForm.register('middleName')} />
-									</Field>
-
-									<Field data-invalid={!!personalForm.formState.errors.email}>
-										<FieldLabel>{t('settings.email')} *</FieldLabel>
-										<Input
-											type="email"
-											{...personalForm.register('email', {
-												required: t('validation.required'),
-												pattern: {
-													value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-													message: t('validation.email_invalid'),
-												},
-											})}
-										/>
-										<FieldError errors={[personalForm.formState.errors.email]} />
-									</Field>
-
-									<Field data-invalid={!!personalForm.formState.errors.phone}>
-										<FieldLabel>{t('settings.phone')} *</FieldLabel>
-										<Controller
-											name="phone"
-											control={personalForm.control}
-											rules={{ required: t('validation.required') }}
-											render={({ field }) => (
-												<PhoneInput
-													id={`${pwdId}-phone`}
-													value={field.value ?? ''}
-													onChange={field.onChange}
-													onBlur={field.onBlur}
-													international
-													placeholder={t('auth.login.phone_placeholder')}
-												/>
-											)}
-										/>
-										<FieldError errors={[personalForm.formState.errors.phone]} />
-									</Field>
-								</FieldGroup>
-
-								<div className="pt-4">
-									<Button type="submit" className="w-full">
-										<Save className="size-4 mr-2" />
-										{t('settings.save')}
-									</Button>
+							{meLoading ? (
+								<div className="space-y-4">
+									{Array.from({ length: 5 }).map((_, i) => (
+										// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
+										<Skeleton key={i} className="h-9 rounded-md" />
+									))}
 								</div>
-							</form>
+							) : (
+								<form onSubmit={personalForm.handleSubmit(handlePersonalInfoSubmit)} className="space-y-4">
+									<FieldGroup>
+										<Field data-invalid={!!personalForm.formState.errors.firstName}>
+											<FieldLabel>{t('settings.first_name')} *</FieldLabel>
+											<Input {...personalForm.register('firstName', { required: t('validation.required') })} />
+											<FieldError errors={[personalForm.formState.errors.firstName]} />
+										</Field>
+
+										<Field data-invalid={!!personalForm.formState.errors.lastName}>
+											<FieldLabel>{t('settings.last_name')} *</FieldLabel>
+											<Input {...personalForm.register('lastName', { required: t('validation.required') })} />
+											<FieldError errors={[personalForm.formState.errors.lastName]} />
+										</Field>
+
+										<Field>
+											<FieldLabel>{t('settings.middle_name')}</FieldLabel>
+											<Input {...personalForm.register('middleName')} />
+										</Field>
+
+										<Field data-invalid={!!personalForm.formState.errors.email}>
+											<FieldLabel>{t('settings.email')} *</FieldLabel>
+											<Input
+												type="email"
+												{...personalForm.register('email', {
+													required: t('validation.required'),
+													pattern: {
+														value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+														message: t('validation.email_invalid'),
+													},
+												})}
+											/>
+											<FieldError errors={[personalForm.formState.errors.email]} />
+										</Field>
+
+										<Field data-invalid={!!personalForm.formState.errors.phone}>
+											<FieldLabel>{t('settings.phone')} *</FieldLabel>
+											<Controller
+												name="phone"
+												control={personalForm.control}
+												rules={{ required: t('validation.required') }}
+												render={({ field }) => (
+													<PhoneInput
+														id={`${pwdId}-phone`}
+														value={field.value ?? ''}
+														onChange={field.onChange}
+														onBlur={field.onBlur}
+														international
+														placeholder={t('auth.login.phone_placeholder')}
+													/>
+												)}
+											/>
+											<FieldError errors={[personalForm.formState.errors.phone]} />
+										</Field>
+									</FieldGroup>
+
+									<div className="pt-4">
+										<Button type="submit" className="w-full" disabled={updateMe.isPending}>
+											<Save className="size-4 mr-2" />
+											{t('settings.save')}
+										</Button>
+									</div>
+								</form>
+							)}
 						</CardContent>
 					</Card>
 
@@ -246,7 +295,7 @@ export function Settings() {
 								</FieldGroup>
 
 								<div className="pt-4">
-									<Button type="submit" className="w-full">
+									<Button type="submit" className="w-full" disabled={changePassword.isPending}>
 										<Save className="size-4 mr-2" />
 										{t('settings.update_password')}
 									</Button>

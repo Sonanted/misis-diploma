@@ -1,8 +1,10 @@
+import axios from 'axios';
 import type { ComponentProps } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-
+import { toast } from 'sonner';
+import { useSignup } from '@/entities/user/queries';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -20,6 +22,7 @@ type SignupFormValues = {
 
 export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 	const { t } = useTranslation();
+	const signupMutation = useSignup();
 	const {
 		register,
 		control,
@@ -28,9 +31,13 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 		formState: { errors },
 	} = useForm<SignupFormValues>({ mode: 'onBlur' });
 
-	const onSubmit = (data: SignupFormValues) => {
-		// biome-ignore lint/suspicious/noConsole: temporary
-		console.log('signup', data);
+	const handleError = (error: unknown) => {
+		const isConflict = axios.isAxiosError(error) && error.response?.status === 409;
+		toast.error(isConflict ? t('auth.signup.error_conflict') : t('auth.signup.error'));
+	};
+
+	const onSubmit = ({ confirmPassword: _, ...data }: SignupFormValues) => {
+		signupMutation.mutate(data, { onError: handleError });
 	};
 
 	return (
@@ -134,7 +141,9 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 						</Field>
 
 						<Field>
-							<Button type="submit">{t('auth.signup.submit')}</Button>
+							<Button type="submit" disabled={signupMutation.isPending}>
+								{signupMutation.isPending ? t('auth.signup.loading') : t('auth.signup.submit')}
+							</Button>
 							<FieldDescription className="px-6 text-center">
 								{t('auth.signup.have_account')} <Link to="/login">{t('auth.signup.sign_in')}</Link>
 							</FieldDescription>

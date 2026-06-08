@@ -116,6 +116,10 @@ export class UserService {
 		await this.userRepository.update(id, { password: await this.hashService.hash(dto.newPassword) });
 	}
 
+	async setPrimaryAccount(userId: string, accountId: string | null): Promise<void> {
+		await this.userRepository.update(userId, { primaryAccountId: accountId });
+	}
+
 	async delete(id: string): Promise<User> {
 		const user = await this.findOne({ id });
 		return await this.userRepository.remove(user);

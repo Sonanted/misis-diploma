@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router';
+import { AccountBreadcrumb } from './breadcrumbs';
 import { AccountDetail } from '@/widgets/account-detail';
 import { AccountsList } from '@/widgets/accounts-list';
 import { CardDetail } from '@/widgets/card-detail';
@@ -61,7 +62,7 @@ export const router = createBrowserRouter([
 									{
 										path: ':id',
 										element: <AccountDetail />,
-										handle: { breadcrumb: ({ params }) => params.id },
+										handle: { breadcrumb: ({ params }) => <AccountBreadcrumb id={params.id} /> },
 									},
 								],
 							},

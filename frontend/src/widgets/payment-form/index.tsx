@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import type { PendingPayment } from './payment-confirm-dialog';
+import { PaymentConfirmDialog } from './payment-confirm-dialog';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -23,6 +25,7 @@ type PaymentFormValues = {
 export function NewPayment() {
 	const { t } = useTranslation();
 	const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
+	const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
 
 	const {
 		register,
@@ -38,40 +41,68 @@ export function NewPayment() {
 	};
 
 	const onSubmit = (data: PaymentFormValues) => {
-		// biome-ignore lint/suspicious/noConsole: temporary
-		console.log('new payment', data);
-		const methodLabel =
-			selectedMethod === 'account' ? 'account' : selectedMethod === 'phone' ? 'phone number' : 'card';
-		toast.success(t('payments.toast_success'), {
-			description: `$${Number(data.amount).toFixed(2)} sent to ${data.recipient} via ${methodLabel}`,
+		if (!selectedMethod) return;
+		setPendingPayment({
+			method: selectedMethod,
+			fromAccount: data.fromAccount,
+			recipient: data.recipient,
+			recipientIdentifier: data.recipientIdentifier,
+			amount: data.amount,
+			description: data.description,
 		});
+	};
+
+	const handleConfirm = () => {
+		if (!pendingPayment) return;
+		const methodLabel =
+			pendingPayment.method === 'account'
+				? 'account'
+				: pendingPayment.method === 'phone'
+					? 'phone number'
+					: 'card';
+		toast.success(t('payments.toast_success'), {
+			description: `$${Number(pendingPayment.amount).toFixed(2)} sent to ${pendingPayment.recipient} via ${methodLabel}`,
+		});
+		setPendingPayment(null);
 		reset();
 	};
 
 	const getPlaceholder = () => {
 		switch (selectedMethod) {
-			case 'account': return t('payments.account_placeholder');
-			case 'phone': return t('payments.phone_placeholder');
-			case 'card': return t('payments.card_placeholder');
-			default: return '';
+			case 'account':
+				return t('payments.account_placeholder');
+			case 'phone':
+				return t('payments.phone_placeholder');
+			case 'card':
+				return t('payments.card_placeholder');
+			default:
+				return '';
 		}
 	};
 
 	const getRecipientLabel = () => {
 		switch (selectedMethod) {
-			case 'account': return t('payments.recipient_account');
-			case 'phone': return t('payments.recipient_phone');
-			case 'card': return t('payments.recipient_card');
-			default: return '';
+			case 'account':
+				return t('payments.recipient_account');
+			case 'phone':
+				return t('payments.recipient_phone');
+			case 'card':
+				return t('payments.recipient_card');
+			default:
+				return '';
 		}
 	};
 
 	const getPayByTitle = () => {
 		switch (selectedMethod) {
-			case 'account': return t('payments.pay_by_account');
-			case 'phone': return t('payments.pay_by_phone');
-			case 'card': return t('payments.pay_by_card');
-			default: return '';
+			case 'account':
+				return t('payments.pay_by_account');
+			case 'phone':
+				return t('payments.pay_by_phone');
+			case 'card':
+				return t('payments.pay_by_card');
+			default:
+				return '';
 		}
 	};
 
@@ -87,9 +118,24 @@ export function NewPayment() {
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						{(
 							[
-								{ method: 'account', icon: Hash, label: 'payments.method_account', sub: 'payments.method_account_sub' },
-								{ method: 'phone', icon: Phone, label: 'payments.method_phone', sub: 'payments.method_phone_sub' },
-								{ method: 'card', icon: CreditCard, label: 'payments.method_card', sub: 'payments.method_card_sub' },
+								{
+									method: 'account',
+									icon: Hash,
+									label: 'payments.method_account',
+									sub: 'payments.method_account_sub',
+								},
+								{
+									method: 'phone',
+									icon: Phone,
+									label: 'payments.method_phone',
+									sub: 'payments.method_phone_sub',
+								},
+								{
+									method: 'card',
+									icon: CreditCard,
+									label: 'payments.method_card',
+									sub: 'payments.method_card_sub',
+								},
 							] as const
 						).map(({ method, icon: Icon, label, sub }) => (
 							<Button
@@ -127,7 +173,13 @@ export function NewPayment() {
 												control={control}
 												rules={{ required: t('validation.required') }}
 												render={({ field }) => (
-													<Select value={field.value ?? ''} onValueChange={field.onChange} onOpenChange={(open) => { if (!open) field.onBlur(); }}>
+													<Select
+														value={field.value ?? ''}
+														onValueChange={field.onChange}
+														onOpenChange={(open) => {
+															if (!open) field.onBlur();
+														}}
+													>
 														<SelectTrigger className="w-full">
 															<SelectValue placeholder={t('payments.from_account_placeholder')} />
 														</SelectTrigger>
@@ -170,7 +222,9 @@ export function NewPayment() {
 										<Field data-invalid={!!errors.amount}>
 											<FieldLabel>{t('payments.amount')} *</FieldLabel>
 											<div className="relative">
-												<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+												<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+													$
+												</span>
 												<Input
 													type="number"
 													step="0.01"
@@ -206,18 +260,6 @@ export function NewPayment() {
 						</Card>
 					)}
 
-					{selectedMethod && (
-						<Card className="mt-6 bg-muted/50">
-							<CardContent className="p-4">
-								<p className="text-sm text-muted-foreground">
-									<strong>Note:</strong> {t('payments.note_base')}
-									{selectedMethod === 'phone' && t('payments.note_phone')}
-									{selectedMethod === 'card' && t('payments.note_card')}
-								</p>
-							</CardContent>
-						</Card>
-					)}
-
 					{!selectedMethod && (
 						<Card className="bg-muted/50">
 							<CardContent className="p-8 text-center">
@@ -227,6 +269,15 @@ export function NewPayment() {
 					)}
 				</div>
 			</div>
+
+		{pendingPayment && (
+			<PaymentConfirmDialog
+				open={true}
+				data={pendingPayment}
+				onClose={() => setPendingPayment(null)}
+				onConfirm={handleConfirm}
+			/>
+		)}
 		</div>
 	);
 }

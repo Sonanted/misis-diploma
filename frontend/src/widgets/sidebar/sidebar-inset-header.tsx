@@ -1,4 +1,4 @@
-import { Fragment } from 'react/jsx-runtime';
+import { Fragment, type ReactNode } from 'react';
 import { Link, useMatches } from 'react-router';
 import {
 	Breadcrumb,
@@ -12,8 +12,8 @@ import { Separator } from '@/shared/ui/separator';
 import { SidebarTrigger } from '@/shared/ui/sidebar';
 
 type BreadcrumbHandle =
-	| string
-	| ((match: { params: Record<string, string | undefined>; data: unknown }) => string);
+	| ReactNode
+	| ((match: { params: Record<string, string | undefined>; data: unknown }) => ReactNode);
 
 export default function SidebarInsetHeader() {
 	const matches = useMatches();

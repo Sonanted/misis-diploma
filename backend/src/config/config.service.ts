@@ -21,4 +21,8 @@ export class CustomConfigService {
 			expiresIn: this.get('JWT_EXPIRES_IN_MS'),
 		};
 	}
+
+	get topupPassword() {
+		return this.get('TOPUP_PASSWORD');
+	}
 }

@@ -1,8 +1,10 @@
+import axios from 'axios';
 import type { ComponentProps } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
-import { useAuthStore } from '@/entities/user/model';
+import { Link } from 'react-router';
+import { toast } from 'sonner';
+import { useSignin } from '@/entities/user/queries';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
@@ -16,8 +18,7 @@ type LoginFormValues = {
 
 export default function Login({ ...props }: ComponentProps<'div'>) {
 	const { t } = useTranslation();
-	const navigate = useNavigate();
-	const login = useAuthStore((state) => state.login);
+	const signinMutation = useSignin();
 	const {
 		register,
 		control,
@@ -25,9 +26,15 @@ export default function Login({ ...props }: ComponentProps<'div'>) {
 		formState: { errors },
 	} = useForm<LoginFormValues>({ mode: 'onBlur' });
 
-	const onSubmit = (_data: LoginFormValues) => {
-		login();
-		navigate('/');
+	const onSubmit = (data: LoginFormValues) => {
+		signinMutation.mutate(data, {
+			onError: (error) => {
+				const message = axios.isAxiosError(error)
+					? (error.response?.data?.message as string | undefined) ?? t('auth.login.error')
+					: t('auth.login.error');
+				toast.error(message);
+			},
+		});
 	};
 
 	return (
@@ -69,7 +76,9 @@ export default function Login({ ...props }: ComponentProps<'div'>) {
 						</Field>
 
 						<Field>
-							<Button type="submit">{t('auth.login.submit')}</Button>
+							<Button type="submit" disabled={signinMutation.isPending}>
+								{signinMutation.isPending ? t('auth.login.loading') : t('auth.login.submit')}
+							</Button>
 							<FieldDescription className="text-center">
 								<Link to="/forgot-password">{t('auth.login.forgot_password')}</Link>
 							</FieldDescription>

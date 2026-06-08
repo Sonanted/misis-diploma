@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { EAccountCurrency } from 'src/shared/enums/EAccountCurrency';
 import { EAccountType } from 'src/shared/enums/EAccountType';
 
@@ -18,4 +18,9 @@ export class CreateAccountDto {
 	@IsNumber()
 	@IsOptional()
 	interestRate?: number;
+
+	@IsNumber()
+	@IsOptional()
+	@Min(500)
+	creditLimit?: number;
 }

@@ -27,11 +27,18 @@ export class AuthService {
 	}
 
 	async validateUser(signinDto: SigninDto): Promise<User> {
-		const user = await this.userService.findOneWithPassword({ phone: signinDto.phone });
+		const INVALID_CREDENTIALS = 'Неверный телефон или пароль';
+
+		let user: User;
+		try {
+			user = await this.userService.findOneWithPassword({ phone: signinDto.phone });
+		} catch {
+			throw new UnauthorizedException(INVALID_CREDENTIALS);
+		}
 
 		const isMatch = await bcrypt.compare(signinDto.password, user.password);
 		if (!isMatch) {
-			throw new UnauthorizedException('Неверный телефон или пароль');
+			throw new UnauthorizedException(INVALID_CREDENTIALS);
 		}
 
 		return user;

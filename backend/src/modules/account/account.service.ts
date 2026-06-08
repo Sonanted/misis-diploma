@@ -1,11 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CustomConfigService } from 'src/config/config.service';
 import { EAccountStatus } from 'src/shared/enums/EAccountStatus';
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import { EAccountType } from 'src/shared/enums/EAccountType';
+import { DataSource, FindOptionsWhere, Not, Repository } from 'typeorm';
 import { IAuthRequest } from '../auth/interfaces/IAuthRequest';
 import { UserService } from '../user/user.service';
 import { BALANCE_SHEET_ACCOUNTS, BANK_CONFIG, CURRENCY_CODES } from './account.contants';
 import { CreateAccountDto } from './dto/create-account.dto';
+import { TopupAccountDto } from './dto/topup-account.dto';
 import { UpdateAccountNameDto } from './dto/update-account-name.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { Account } from './entities/account.entity';
@@ -30,6 +33,7 @@ export class AccountService {
 		private readonly accountRepository: Repository<Account>,
 		private readonly dataSource: DataSource,
 		private readonly userService: UserService,
+		private readonly configService: CustomConfigService,
 	) {}
 
 	async create(req: IAuthRequest, dto: CreateAccountDto): Promise<Account> {
@@ -41,6 +45,10 @@ export class AccountService {
 		const currencyCode = CURRENCY_CODES[dto.currency];
 		if (!currencyCode) {
 			throw new BadRequestException(`Неподдерживаемая валюта: ${dto.currency}`);
+		}
+
+		if (dto.type === EAccountType.Credit && !dto.creditLimit) {
+			throw new BadRequestException('Укажите кредитный лимит для кредитного счёта');
 		}
 
 		const user = await this.userService.findOne({ id: req.user.id });
@@ -55,12 +63,46 @@ export class AccountService {
 			status: EAccountStatus.Active,
 			currency: dto.currency,
 			balance: 0,
-			interestRate: dto.interestRate,
+			interestRate: dto.type === EAccountType.Credit ? (dto.interestRate ?? 5) : dto.interestRate,
+			creditLimit: dto.type === EAccountType.Credit ? (dto.creditLimit ?? null) : null,
 		});
 
 		await this.accountRepository.save(account);
 
+		if (dto.type === EAccountType.Checking) {
+			const checkingCount = await this.accountRepository.count({
+				where: { user: { id: user.id }, type: EAccountType.Checking },
+			});
+			if (checkingCount === 1) {
+				await this.userService.setPrimaryAccount(user.id, account.id);
+			}
+		}
+
 		return this.findOne(req, { id: account.id });
+	}
+
+	async monthlyPayment(req: IAuthRequest, id: string): Promise<Account> {
+		const account = await this.findOne(req, { id });
+
+		if (account.type !== EAccountType.Credit) {
+			throw new BadRequestException('Ежемесячный платёж доступен только для кредитных счетов');
+		}
+
+		if (!account.balance || account.balance <= 0) {
+			throw new BadRequestException('Задолженность отсутствует');
+		}
+
+		const rate = account.interestRate ?? 5;
+		const monthlyInterest = account.balance * (rate / 100) / 12;
+		const newBalance = parseFloat((account.balance + monthlyInterest).toFixed(2));
+
+		await this.accountRepository.update({ id }, { balance: newBalance });
+		return this.findOne(req, { id });
+	}
+
+	async setPrimary(req: IAuthRequest, id: string): Promise<void> {
+		await this.findOne(req, { id });
+		await this.userService.setPrimaryAccount(req.user.id, id);
 	}
 
 	async updateName(req: IAuthRequest, id: string, dto: UpdateAccountNameDto): Promise<Account> {
@@ -68,7 +110,54 @@ export class AccountService {
 	}
 
 	async updateStatus(req: IAuthRequest, id: string, dto: UpdateAccountStatusDto): Promise<Account> {
-		return this.update(req, id, dto);
+		if (dto.status === EAccountStatus.Closed) {
+			const account = await this.findOne(req, { id });
+			if (account.balance !== 0) {
+				throw new BadRequestException('Невозможно закрыть счёт с ненулевым балансом');
+			}
+		}
+
+		const result = await this.update(req, id, dto);
+
+		if (dto.status === EAccountStatus.Closed) {
+			const user = await this.userService.findOne({ id: req.user.id });
+			if (user.primaryAccountId === id) {
+				const nextDefault = await this.accountRepository.findOne({
+					where: {
+						user: { id: req.user.id },
+						type: EAccountType.Checking,
+						status: Not(EAccountStatus.Closed),
+					},
+					order: { createdAt: 'ASC' },
+				});
+				await this.userService.setPrimaryAccount(req.user.id, nextDefault?.id ?? null);
+			}
+		}
+
+		return result;
+	}
+
+	async topup(req: IAuthRequest, id: string, dto: TopupAccountDto): Promise<Account> {
+		if (dto.password !== this.configService.topupPassword) {
+			throw new ForbiddenException('Неверный пароль пополнения');
+		}
+
+		const account = await this.findOne(req, { id });
+
+		if (dto.amount === 0) {
+			throw new BadRequestException('Сумма пополнения не может быть равна нулю');
+		}
+
+		const isCredit = account.type === EAccountType.Credit;
+		const newBalance = isCredit ? account.balance - dto.amount : account.balance + dto.amount;
+		if (newBalance < 0) {
+			throw new BadRequestException(
+				isCredit ? 'Сумма погашения превышает задолженность' : 'Недостаточно средств на счёте',
+			);
+		}
+
+		await this.accountRepository.update({ id }, { balance: newBalance });
+		return this.findOne(req, { id });
 	}
 
 	private async update(req: IAuthRequest, id: string, dto: Partial<Account>): Promise<Account> {
@@ -101,8 +190,9 @@ export class AccountService {
 		return account;
 	}
 
-	async findAll(): Promise<Account[]> {
+	async findAll(req: IAuthRequest): Promise<Account[]> {
 		return this.accountRepository.find({
+			where: { user: { id: req.user.id }, status: Not(EAccountStatus.Closed) },
 			order: { createdAt: 'DESC' },
 		});
 	}
