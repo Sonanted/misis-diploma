@@ -6,6 +6,8 @@ import { Account } from './modules/account/entities/account.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { CardModule } from './modules/card/card.module';
 import { Card } from './modules/card/entities/card.entity';
+import { Operation } from './modules/operation/entities/operation.entity';
+import { OperationModule } from './modules/operation/operation.module';
 import { TransferModule } from './modules/transfer/transfer.module';
 import { User } from './modules/user/entities/user.entity';
 import { UserModule } from './modules/user/user.module';
@@ -21,9 +23,9 @@ import { UserModule } from './modules/user/user.module';
 			username: 'postgres',
 			password: 'postgres',
 			database: 'diploma-db',
-			entities: [User, Account, Card],
+			entities: [User, Account, Card, Operation],
 			migrations: ['dist/src/database/migrations/*.js'],
-			synchronize: true, // set to false in production and use migrations
+			synchronize: true,
 		}),
 
 		AuthModule,
@@ -31,6 +33,7 @@ import { UserModule } from './modules/user/user.module';
 		AccountModule,
 		CardModule,
 		TransferModule,
+		OperationModule,
 	],
 })
 export class AppModule {}

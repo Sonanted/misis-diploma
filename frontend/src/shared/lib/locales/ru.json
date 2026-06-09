@@ -213,7 +213,21 @@
 		"filter_transfer": "Переводы",
 		"type_incoming": "Поступление",
 		"type_outgoing": "Расход",
-		"type_transfer": "Перевод"
+		"type_transfer": "Перевод",
+		"type_topup": "Пополнение",
+		"type_monthly_payment": "Платёж по кредиту",
+		"type_card_issued": "Выпуск карты",
+		"type_card_closed": "Закрытие карты",
+		"type_card_locked": "Блокировка карты",
+		"type_card_unlocked": "Разблокировка карты",
+		"type_card_pin_changed": "Смена PIN",
+		"type_other": "Другое",
+		"filter_other": "Операции по карте",
+		"filter_internal": "Между своими счетами",
+		"type_internal": "Свои счета",
+		"load_more": "Загрузить ещё",
+		"status_completed": "Выполнено",
+		"at": "в"
 	},
 	"payments": {
 		"title": "Новый платёж",

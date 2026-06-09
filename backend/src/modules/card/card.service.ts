@@ -11,9 +11,11 @@ import { EAccountStatus } from 'src/shared/enums/EAccountStatus';
 import { EAccountType } from 'src/shared/enums/EAccountType';
 import { ECardStatus } from 'src/shared/enums/ECardStatus';
 import { ECardType } from 'src/shared/enums/ECardType';
+import { EOperationType } from 'src/shared/enums/EOperationType';
 import { DataSource, Not, Repository } from 'typeorm';
 import { AccountService } from '../account/account.service';
 import { IAuthRequest } from '../auth/interfaces/IAuthRequest';
+import { OperationService } from '../operation/operation.service';
 import { ChangeCardPinDto } from './dto/change-card-pin.dto';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardStatusDto } from './dto/update-card-status.dto';
@@ -50,6 +52,7 @@ export class CardService {
 		private readonly cardRepository: Repository<Card>,
 		private readonly dataSource: DataSource,
 		private readonly accountService: AccountService,
+		private readonly operationService: OperationService,
 	) {}
 
 	async findAll(req: IAuthRequest): Promise<CardListItem[]> {
@@ -103,6 +106,15 @@ export class CardService {
 		});
 
 		await this.cardRepository.save(card);
+
+		await this.operationService.record({
+			type: EOperationType.CardIssued,
+			relatedCardId: card.id,
+			relatedAccountId: account.id,
+			userId: req.user.id,
+			description: `Выпуск карты «${dto.name}»`,
+		});
+
 		return this.findOne(req, card.id);
 	}
 
@@ -114,12 +126,34 @@ export class CardService {
 		}
 
 		await this.cardRepository.update(id, { status: dto.status });
+
+		const typeMap: Record<ECardStatus, EOperationType> = {
+			[ECardStatus.Locked]: EOperationType.CardLocked,
+			[ECardStatus.Active]: EOperationType.CardUnlocked,
+			[ECardStatus.Closed]: EOperationType.CardClosed,
+		};
+
+		await this.operationService.record({
+			type: typeMap[dto.status],
+			relatedCardId: card.id,
+			relatedAccountId: card.account.id,
+			userId: req.user.id,
+		});
+
 		return this.findOne(req, id);
 	}
 
 	async changePin(req: IAuthRequest, id: string, dto: ChangeCardPinDto): Promise<void> {
-		await this.loadCard(req, id);
+		const card = await this.loadCard(req, id);
 		await this.cardRepository.update(id, { pin: dto.pin });
+
+		await this.operationService.record({
+			type: EOperationType.CardPinChanged,
+			relatedCardId: card.id,
+			relatedAccountId: card.account.id,
+			userId: req.user.id,
+			description: 'Смена PIN-кода',
+		});
 	}
 
 	private async loadCard(req: IAuthRequest, id: string): Promise<Card> {

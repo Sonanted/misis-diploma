@@ -215,7 +215,21 @@
 		"filter_transfer": "Transfer",
 		"type_incoming": "Income",
 		"type_outgoing": "Expense",
-		"type_transfer": "Transfer"
+		"type_transfer": "Transfer",
+		"type_topup": "Top Up",
+		"type_monthly_payment": "Credit Payment",
+		"type_card_issued": "Card Issued",
+		"type_card_closed": "Card Closed",
+		"type_card_locked": "Card Locked",
+		"type_card_unlocked": "Card Unlocked",
+		"type_card_pin_changed": "PIN Changed",
+		"type_other": "Other",
+		"filter_other": "Card Operations",
+		"filter_internal": "Own Account Transfers",
+		"type_internal": "Own accounts",
+		"load_more": "Load more",
+		"status_completed": "Completed",
+		"at": "at"
 	},
 	"payments": {
 		"title": "New Transfer",

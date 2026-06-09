@@ -55,3 +55,36 @@ export interface ApiCardDetail extends ApiCard {
 export interface AuthResponse {
 	access_token: string;
 }
+
+export type EOperationType =
+	| 'transfer'
+	| 'topup'
+	| 'monthly_payment'
+	| 'card_issued'
+	| 'card_closed'
+	| 'card_locked'
+	| 'card_unlocked'
+	| 'card_pin_changed';
+
+export interface ApiOperation {
+	id: string;
+	type: EOperationType;
+	amount: number | null;
+	fromAccountId: string | null;
+	fromAccountNumber: string | null;
+	toAccountId: string | null;
+	toAccountNumber: string | null;
+	relatedCardId: string | null;
+	relatedAccountId: string | null;
+	userId: string;
+	description: string | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface PaginatedOperations {
+	items: ApiOperation[];
+	total: number;
+	limit: number;
+	offset: number;
+}

@@ -6,10 +6,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { EAccountStatus } from 'src/shared/enums/EAccountStatus';
 import { EAccountType } from 'src/shared/enums/EAccountType';
+import { EOperationType } from 'src/shared/enums/EOperationType';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Account } from '../account/entities/account.entity';
 import { IAuthRequest } from '../auth/interfaces/IAuthRequest';
 import { Card } from '../card/entities/card.entity';
+import { OperationService } from '../operation/operation.service';
 import { UserService } from '../user/user.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 
@@ -17,6 +19,11 @@ export interface TransferResult {
 	fromAccountId: string;
 	toAccountId: string;
 	amount: number;
+}
+
+interface ResolvedDestination {
+	accountId: string;
+	cardId: string | null;
 }
 
 @Injectable()
@@ -27,6 +34,7 @@ export class TransferService {
 		@InjectRepository(Card)
 		private readonly cardRepository: Repository<Card>,
 		private readonly userService: UserService,
+		private readonly operationService: OperationService,
 		private readonly dataSource: DataSource,
 	) {}
 
@@ -40,9 +48,9 @@ export class TransferService {
 		if (!isOwner) throw new NotFoundException('Счёт-источник не найден');
 
 		// Resolve destination account ID before the transaction (non-balance read, no lock needed)
-		const toAccountId = await this.resolveDestinationId(dto.method, dto.recipientIdentifier);
+		const destination = await this.resolveDestination(dto.method, dto.recipientIdentifier);
 
-		if (dto.fromAccountId === toAccountId) {
+		if (dto.fromAccountId === destination.accountId) {
 			throw new BadRequestException('Нельзя переводить на тот же счёт');
 		}
 
@@ -51,13 +59,13 @@ export class TransferService {
 			// If two concurrent transactions transfer between the same pair of accounts
 			// in opposite directions, they both try to lock the same "first" row,
 			// so one blocks until the other commits — no deadlock possible.
-			const [firstId, secondId] = [dto.fromAccountId, toAccountId].sort();
+			const [firstId, secondId] = [dto.fromAccountId, destination.accountId].sort();
 
 			const firstAccount = await this.lockAccount(manager, firstId);
 			const secondAccount = await this.lockAccount(manager, secondId);
 
 			const fromAccount = firstId === dto.fromAccountId ? firstAccount : secondAccount;
-			const toAccount = firstId === toAccountId ? firstAccount : secondAccount;
+			const toAccount = firstId === destination.accountId ? firstAccount : secondAccount;
 
 			this.validateSource(fromAccount, dto.amount);
 			this.validateDestination(toAccount);
@@ -74,6 +82,19 @@ export class TransferService {
 
 			await manager.update(Account, { id: fromAccount.id }, { balance: newFromBalance });
 			await manager.update(Account, { id: toAccount.id }, { balance: newToBalance });
+
+			// Record operation inside the same transaction so a failed save rolls back the transfer
+			await this.operationService.recordWithManager(manager, {
+				type: EOperationType.Transfer,
+				amount: dto.amount,
+				fromAccountId: fromAccount.id,
+				fromAccountNumber: fromAccount.accountNumber,
+				toAccountId: toAccount.id,
+				toAccountNumber: toAccount.accountNumber,
+				relatedCardId: destination.cardId,
+				userId: req.user.id,
+				description: dto.description ?? null,
+			});
 
 			return { fromAccountId: fromAccount.id, toAccountId: toAccount.id, amount: dto.amount };
 		});
@@ -106,16 +127,16 @@ export class TransferService {
 			throw new BadRequestException('Счёт получателя неактивен');
 	}
 
-	private async resolveDestinationId(
+	private async resolveDestination(
 		method: 'account' | 'phone' | 'card',
 		identifier: string,
-	): Promise<string> {
+	): Promise<ResolvedDestination> {
 		if (method === 'account') {
 			const account = await this.accountRepository.findOne({
 				where: { accountNumber: identifier },
 			});
 			if (!account) throw new NotFoundException('Счёт с таким номером не найден в банке');
-			return account.id;
+			return { accountId: account.id, cardId: null };
 		}
 
 		if (method === 'phone') {
@@ -127,7 +148,7 @@ export class TransferService {
 			}
 			if (!user.primaryAccountId)
 				throw new BadRequestException('У получателя не установлен счёт по умолчанию');
-			return user.primaryAccountId;
+			return { accountId: user.primaryAccountId, cardId: null };
 		}
 
 		// card
@@ -136,6 +157,6 @@ export class TransferService {
 			relations: ['account'],
 		});
 		if (!card) throw new NotFoundException('Карта с таким номером не найдена в банке');
-		return card.account.id;
+		return { accountId: card.account.id, cardId: card.id };
 	}
 }

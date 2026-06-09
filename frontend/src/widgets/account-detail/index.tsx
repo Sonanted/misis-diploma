@@ -6,6 +6,50 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useAccount, useBankInfo, useMonthlyPayment, useSetPrimaryAccount, useUpdateAccountStatus } from '@/entities/account/queries';
 import { useCards } from '@/entities/card/queries';
+import { operationToTransactionItem } from '@/entities/operation/helpers';
+import { useAccountOperations } from '@/entities/operation/queries';
+
+interface AccountOperationsSectionProps {
+	accountId: string;
+	currency: string;
+}
+
+function AccountOperationsSection({ accountId, currency }: AccountOperationsSectionProps) {
+	const { t } = useTranslation();
+	const { data: opsData, fetchNextPage, hasNextPage, isFetchingNextPage } = useAccountOperations(accountId);
+	const TYPE_OPTIONS = [
+		{ value: 'all', label: t('operations.filter_all') },
+		{ value: 'incoming', label: t('operations.filter_incoming') },
+		{ value: 'outgoing', label: t('operations.filter_outgoing') },
+		{ value: 'other', label: t('operations.filter_other') },
+	];
+	const items = (opsData?.pages.flatMap((p) => p.items) ?? []).map((op) =>
+		operationToTransactionItem(op, t, new Set(), accountId),
+	);
+	return (
+		<Card className="gap-1">
+			<CardHeader>
+				<CardTitle>{t('account_detail.recent_operations')}</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<TransactionHistory
+					transactions={items}
+					typeOptions={TYPE_OPTIONS}
+					currency={currency}
+					locale="ru-RU"
+					getDetailUrl={(opId) => `/operations/${opId}`}
+				/>
+				{hasNextPage && (
+					<div className="mt-4 flex justify-center">
+						<Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+							{isFetchingNextPage ? '...' : t('operations.load_more')}
+						</Button>
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
+}
 import { useMe } from '@/entities/user/queries';
 import { BalanceToggle } from '@/features/balance-visibility/balance-toggle';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
@@ -19,6 +63,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/di
 import { Separator } from '@/shared/ui/separator';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { CreateCardDialog } from '@/widgets/cards-list/create-card-dialog';
+import { TransactionHistory } from '@/widgets/transaction-history';
 import { TopupDialog } from './topup-dialog';
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -289,6 +334,7 @@ export function AccountDetail() {
 	const { data: bankInfo } = useBankInfo();
 	const setPrimary = useSetPrimaryAccount();
 
+
 	const isPrimary = me?.primaryAccountId === id;
 
 	if (isLoading) {
@@ -426,6 +472,8 @@ export function AccountDetail() {
 					</CardContent>
 				</Card>
 			)}
+
+			<AccountOperationsSection accountId={account.id} currency={account.currency} />
 
 		</div>
 	);

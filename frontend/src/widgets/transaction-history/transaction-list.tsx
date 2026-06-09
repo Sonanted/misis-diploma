@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
+import { maskAccountNumber } from '@/shared/helpers';
 import { Badge } from '@/shared/ui/badge';
 import { Separator } from '@/shared/ui/separator';
 
@@ -13,6 +14,8 @@ export type TransactionItem = {
 	typeLabel?: string;
 	/** Machine value used for type-filter matching inside TransactionHistory */
 	type?: string;
+	fromAccountNumber?: string | null;
+	toAccountNumber?: string | null;
 };
 
 type Props = {
@@ -23,6 +26,65 @@ type Props = {
 	getDetailUrl?: (id: string) => string;
 };
 
+interface TransactionCardProps {
+	transaction: TransactionItem;
+	currency: string;
+	locale: string;
+	url?: string;
+}
+
+function TransactionCard({ transaction, currency, locale, url }: TransactionCardProps) {
+	const { t } = useTranslation();
+	const balanceVisible = usePrivacyStore((s) => s.balanceVisible);
+	const isInternal = transaction.type === 'internal';
+	const amountColor = !isInternal && transaction.amount > 0 ? 'text-green-600' : 'text-foreground';
+	const amountPrefix = isInternal ? '↔ ' : transaction.amount > 0 ? '+' : '−';
+	const accountRoute =
+		transaction.fromAccountNumber && transaction.toAccountNumber
+			? `${maskAccountNumber(transaction.fromAccountNumber)} → ${maskAccountNumber(transaction.toAccountNumber)}`
+			: null;
+
+	const content = (
+		<div>
+			<div className="flex items-start justify-between gap-2">
+				<div className="min-w-0">
+					<p className="font-medium">{transaction.description}</p>
+					<div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+						{transaction.typeLabel && (
+							<Badge variant="secondary" className="text-xs">
+								{transaction.typeLabel}
+							</Badge>
+						)}
+						{isInternal && (
+							<Badge variant="outline" className="text-xs">
+								{t('operations.type_internal')}
+							</Badge>
+						)}
+					</div>
+					{accountRoute && (
+						<p className="text-xs text-muted-foreground font-mono mt-1">{accountRoute}</p>
+					)}
+				</div>
+				<p className={`font-semibold shrink-0 ${amountColor}`}>
+					{balanceVisible
+						? `${amountPrefix}${Math.abs(transaction.amount).toLocaleString(locale, { minimumFractionDigits: 2 })} ${currency}`
+						: `•••• ${currency}`}
+				</p>
+			</div>
+			<p className="text-sm text-muted-foreground mt-1">{transaction.date}</p>
+		</div>
+	);
+
+	if (url) {
+		return (
+			<Link to={url} className="block hover:bg-accent -mx-3 px-3 py-1 rounded-md transition-colors">
+				{content}
+			</Link>
+		);
+	}
+	return content;
+}
+
 export function TransactionList({
 	transactions,
 	currency = '₽',
@@ -31,7 +93,6 @@ export function TransactionList({
 	getDetailUrl,
 }: Props) {
 	const { t } = useTranslation();
-	const balanceVisible = usePrivacyStore((s) => s.balanceVisible);
 	const message = emptyMessage ?? t('transaction_history.empty');
 
 	if (transactions.length === 0) {
@@ -40,42 +101,17 @@ export function TransactionList({
 
 	return (
 		<div className="space-y-4">
-			{transactions.map((transaction, index) => {
-				const url = getDetailUrl?.(transaction.id);
-				const content = (
-					<div>
-						<p className="font-medium">{transaction.description}</p>
-						{transaction.typeLabel && (
-							<Badge variant="secondary" className="text-xs mt-0.5">
-								{transaction.typeLabel}
-							</Badge>
-						)}
-						<div className="flex items-baseline justify-between flex-wrap gap-x-3 gap-y-0.5 mt-1">
-							<p className="text-sm text-muted-foreground">{transaction.date}</p>
-							<p
-								className={`font-semibold ml-auto ${transaction.amount > 0 ? 'text-green-600' : 'text-foreground'}`}
-							>
-								{balanceVisible
-									? `${transaction.amount > 0 ? '+' : '−'}${Math.abs(transaction.amount).toLocaleString(locale, { minimumFractionDigits: 2 })} ${currency}`
-									: `•••• ${currency}`}
-							</p>
-						</div>
-					</div>
-				);
-
-				return (
-					<div key={transaction.id}>
-						{index > 0 && <Separator className="mb-4" />}
-						{url ? (
-							<Link to={url} className="block hover:bg-accent -mx-3 px-3 py-1 rounded-md transition-colors">
-								{content}
-							</Link>
-						) : (
-							content
-						)}
-					</div>
-				);
-			})}
+			{transactions.map((transaction, index) => (
+				<div key={transaction.id}>
+					{index > 0 && <Separator className="mb-4" />}
+					<TransactionCard
+						transaction={transaction}
+						currency={currency}
+						locale={locale}
+						url={getDetailUrl?.(transaction.id)}
+					/>
+				</div>
+			))}
 		</div>
 	);
 }

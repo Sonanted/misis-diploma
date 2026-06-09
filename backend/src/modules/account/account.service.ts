@@ -3,8 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CustomConfigService } from 'src/config/config.service';
 import { EAccountStatus } from 'src/shared/enums/EAccountStatus';
 import { EAccountType } from 'src/shared/enums/EAccountType';
+import { EOperationType } from 'src/shared/enums/EOperationType';
 import { DataSource, FindOptionsWhere, Not, Repository } from 'typeorm';
 import { IAuthRequest } from '../auth/interfaces/IAuthRequest';
+import { OperationService } from '../operation/operation.service';
 import { UserService } from '../user/user.service';
 import { BALANCE_SHEET_ACCOUNTS, BANK_CONFIG, CURRENCY_CODES } from './account.contants';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -34,6 +36,7 @@ export class AccountService {
 		private readonly dataSource: DataSource,
 		private readonly userService: UserService,
 		private readonly configService: CustomConfigService,
+		private readonly operationService: OperationService,
 	) {}
 
 	async create(req: IAuthRequest, dto: CreateAccountDto): Promise<Account> {
@@ -97,6 +100,16 @@ export class AccountService {
 		const newBalance = parseFloat((account.balance + monthlyInterest).toFixed(2));
 
 		await this.accountRepository.update({ id }, { balance: newBalance });
+
+		await this.operationService.record({
+			type: EOperationType.MonthlyPayment,
+			amount: parseFloat(monthlyInterest.toFixed(2)),
+			fromAccountId: account.id,
+			fromAccountNumber: account.accountNumber,
+			userId: req.user.id,
+			description: 'Начисление процентов по кредиту',
+		});
+
 		return this.findOne(req, { id });
 	}
 
@@ -157,6 +170,16 @@ export class AccountService {
 		}
 
 		await this.accountRepository.update({ id }, { balance: newBalance });
+
+		await this.operationService.record({
+			type: EOperationType.Topup,
+			amount: dto.amount,
+			toAccountId: account.id,
+			toAccountNumber: account.accountNumber,
+			userId: req.user.id,
+			description: isCredit ? 'Погашение кредита' : 'Пополнение счёта',
+		});
+
 		return this.findOne(req, { id });
 	}
 
