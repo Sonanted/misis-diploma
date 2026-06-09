@@ -1,26 +1,23 @@
 import { useTranslation } from 'react-i18next';
+import type { ApiAccount } from '@/shared/api/types';
+import { formatBalance, maskAccountNumber } from '@/shared/helpers';
 import { Button } from '@/shared/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { Separator } from '@/shared/ui/separator';
 
 export type PendingPayment = {
 	method: 'account' | 'phone' | 'card';
-	fromAccount: string;
-	recipient: string;
+	fromAccountId: string;
 	recipientIdentifier: string;
 	amount: number;
 	description?: string;
 };
 
-const ACCOUNT_DISPLAY: Record<string, string> = {
-	checking: 'Checking Account (****3456)',
-	savings: 'Savings Account (****7890)',
-	business: 'Business Account (****1234)',
-};
-
 type Props = {
 	open: boolean;
 	data: PendingPayment;
+	accounts: ApiAccount[];
+	isPending: boolean;
 	onClose: () => void;
 	onConfirm: () => void;
 };
@@ -39,8 +36,13 @@ function Row({ label, value }: RowProps) {
 	);
 }
 
-export function PaymentConfirmDialog({ open, data, onClose, onConfirm }: Props) {
+export function PaymentConfirmDialog({ open, data, accounts, isPending, onClose, onConfirm }: Props) {
 	const { t } = useTranslation();
+
+	const fromAccount = accounts.find((a) => a.id === data.fromAccountId);
+	const fromAccountLabel = fromAccount
+		? `${fromAccount.name} (${maskAccountNumber(fromAccount.accountNumber)}) — ${formatBalance(fromAccount.balance, fromAccount.currency)}`
+		: data.fromAccountId;
 
 	const recipientLabel =
 		data.method === 'phone'
@@ -57,16 +59,11 @@ export function PaymentConfirmDialog({ open, data, onClose, onConfirm }: Props) 
 				</DialogHeader>
 
 				<div className="space-y-3 py-2">
-					<Row
-						label={t('payments.from_account')}
-						value={ACCOUNT_DISPLAY[data.fromAccount] ?? data.fromAccount}
-					/>
-					<Separator />
-					<Row label={t('payments.recipient')} value={data.recipient} />
+					<Row label={t('payments.from_account')} value={fromAccountLabel} />
 					<Separator />
 					<Row label={recipientLabel} value={data.recipientIdentifier} />
 					<Separator />
-					<Row label={t('payments.amount')} value={`$${Number(data.amount).toFixed(2)}`} />
+					<Row label={t('payments.amount')} value={String(data.amount)} />
 					{data.description && (
 						<>
 							<Separator />
@@ -76,11 +73,11 @@ export function PaymentConfirmDialog({ open, data, onClose, onConfirm }: Props) 
 				</div>
 
 				<DialogFooter>
-					<Button variant="outline" onClick={onClose}>
+					<Button variant="outline" onClick={onClose} disabled={isPending}>
 						{t('payments.cancel')}
 					</Button>
-					<Button onClick={onConfirm}>
-						{t('payments.send')}
+					<Button onClick={onConfirm} disabled={isPending}>
+						{isPending ? t('payments.sending') : t('payments.send')}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

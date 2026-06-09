@@ -6,6 +6,7 @@ import { Account } from './modules/account/entities/account.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { CardModule } from './modules/card/card.module';
 import { Card } from './modules/card/entities/card.entity';
+import { TransferModule } from './modules/transfer/transfer.module';
 import { User } from './modules/user/entities/user.entity';
 import { UserModule } from './modules/user/user.module';
 
@@ -29,6 +30,7 @@ import { UserModule } from './modules/user/user.module';
 		UserModule,
 		AccountModule,
 		CardModule,
+		TransferModule,
 	],
 })
 export class AppModule {}

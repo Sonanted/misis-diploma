@@ -1,31 +1,44 @@
+import axios from 'axios';
 import { CreditCard, Hash, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type { PendingPayment } from './payment-confirm-dialog';
-import { PaymentConfirmDialog } from './payment-confirm-dialog';
+import { useAccounts } from '@/entities/account/queries';
+import { useTransfer } from '@/entities/transfer/queries';
+import { formatBalance, maskAccountNumber } from '@/shared/helpers';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Textarea } from '@/shared/ui/textarea';
+import type { PendingPayment } from './payment-confirm-dialog';
+import { PaymentConfirmDialog } from './payment-confirm-dialog';
 
 type PaymentMethod = 'account' | 'phone' | 'card' | null;
 
 type PaymentFormValues = {
-	fromAccount: string;
-	recipient: string;
+	fromAccountId: string;
 	recipientIdentifier: string;
-	amount: number;
+	amount: string;
 	description: string;
+};
+
+const normalizeAmount = (v: string): number => {
+	const normalized = v.trim().replace(',', '.');
+	const num = parseFloat(normalized);
+	return Number.isNaN(num) ? 0 : num;
 };
 
 export function NewPayment() {
 	const { t } = useTranslation();
 	const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
 	const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
+
+	const { data: accounts = [] } = useAccounts();
+	const activeAccounts = accounts.filter((a) => a.status === 'active' && a.type !== 'credit');
+	const transfer = useTransfer();
 
 	const {
 		register,
@@ -44,65 +57,68 @@ export function NewPayment() {
 		if (!selectedMethod) return;
 		setPendingPayment({
 			method: selectedMethod,
-			fromAccount: data.fromAccount,
-			recipient: data.recipient,
+			fromAccountId: data.fromAccountId,
 			recipientIdentifier: data.recipientIdentifier,
-			amount: data.amount,
+			amount: normalizeAmount(data.amount),
 			description: data.description,
 		});
 	};
 
 	const handleConfirm = () => {
 		if (!pendingPayment) return;
-		const methodLabel =
-			pendingPayment.method === 'account'
-				? 'account'
-				: pendingPayment.method === 'phone'
-					? 'phone number'
-					: 'card';
-		toast.success(t('payments.toast_success'), {
-			description: `$${Number(pendingPayment.amount).toFixed(2)} sent to ${pendingPayment.recipient} via ${methodLabel}`,
-		});
-		setPendingPayment(null);
-		reset();
+
+		transfer.mutate(
+			{
+				fromAccountId: pendingPayment.fromAccountId,
+				method: pendingPayment.method,
+				recipientIdentifier: pendingPayment.recipientIdentifier,
+				amount: pendingPayment.amount,
+				description: pendingPayment.description,
+			},
+			{
+				onSuccess: () => {
+					toast.success(t('payments.toast_success'));
+					setPendingPayment(null);
+					reset();
+					setSelectedMethod(null);
+				},
+				onError: (error) => {
+					setPendingPayment(null);
+					if (axios.isAxiosError(error)) {
+						const message: string = error.response?.data?.message ?? t('payments.toast_error');
+						toast.error(message);
+					} else {
+						toast.error(t('payments.toast_error'));
+					}
+				},
+			},
+		);
 	};
 
 	const getPlaceholder = () => {
 		switch (selectedMethod) {
-			case 'account':
-				return t('payments.account_placeholder');
-			case 'phone':
-				return t('payments.phone_placeholder');
-			case 'card':
-				return t('payments.card_placeholder');
-			default:
-				return '';
+			case 'account': return t('payments.account_placeholder');
+			case 'phone': return t('payments.phone_placeholder');
+			case 'card': return t('payments.card_placeholder');
+			default: return '';
 		}
 	};
 
 	const getRecipientLabel = () => {
 		switch (selectedMethod) {
-			case 'account':
-				return t('payments.recipient_account');
-			case 'phone':
-				return t('payments.recipient_phone');
-			case 'card':
-				return t('payments.recipient_card');
-			default:
-				return '';
+			case 'account': return t('payments.recipient_account');
+			case 'phone': return t('payments.recipient_phone');
+			case 'card': return t('payments.recipient_card');
+			default: return '';
 		}
 	};
 
 	const getPayByTitle = () => {
 		switch (selectedMethod) {
-			case 'account':
-				return t('payments.pay_by_account');
-			case 'phone':
-				return t('payments.pay_by_phone');
-			case 'card':
-				return t('payments.pay_by_card');
-			default:
-				return '';
+			case 'account': return t('payments.pay_by_account');
+			case 'phone': return t('payments.pay_by_phone');
+			case 'card': return t('payments.pay_by_card');
+			default: return '';
 		}
 	};
 
@@ -166,10 +182,10 @@ export function NewPayment() {
 							<CardContent>
 								<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 									<FieldGroup>
-										<Field data-invalid={!!errors.fromAccount}>
+										<Field data-invalid={!!errors.fromAccountId}>
 											<FieldLabel>{t('payments.from_account')} *</FieldLabel>
 											<Controller
-												name="fromAccount"
+												name="fromAccountId"
 												control={control}
 												rules={{ required: t('validation.required') }}
 												render={({ field }) => (
@@ -184,23 +200,17 @@ export function NewPayment() {
 															<SelectValue placeholder={t('payments.from_account_placeholder')} />
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value="checking">Checking Account (****3456) - $15,420.50</SelectItem>
-															<SelectItem value="savings">Savings Account (****7890) - $48,750.25</SelectItem>
-															<SelectItem value="business">Business Account (****1234) - $92,340.00</SelectItem>
+															{activeAccounts.map((account) => (
+																<SelectItem key={account.id} value={account.id}>
+																	{account.name} ({maskAccountNumber(account.accountNumber)}) —{' '}
+																	{formatBalance(account.balance, account.currency)}
+																</SelectItem>
+															))}
 														</SelectContent>
 													</Select>
 												)}
 											/>
-											<FieldError errors={[errors.fromAccount]} />
-										</Field>
-
-										<Field data-invalid={!!errors.recipient}>
-											<FieldLabel>{t('payments.recipient')} *</FieldLabel>
-											<Input
-												placeholder={t('payments.recipient_placeholder')}
-												{...register('recipient', { required: t('validation.required') })}
-											/>
-											<FieldError errors={[errors.recipient]} />
+											<FieldError errors={[errors.fromAccountId]} />
 										</Field>
 
 										<Field data-invalid={!!errors.recipientIdentifier}>
@@ -221,21 +231,19 @@ export function NewPayment() {
 
 										<Field data-invalid={!!errors.amount}>
 											<FieldLabel>{t('payments.amount')} *</FieldLabel>
-											<div className="relative">
-												<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-													$
-												</span>
-												<Input
-													type="number"
-													step="0.01"
-													placeholder="0.00"
-													className="pl-7"
-													{...register('amount', {
-														required: t('validation.required'),
-														min: { value: 0.01, message: t('validation.amount_min') },
-													})}
-												/>
-											</div>
+											<Input
+												type="text"
+												inputMode="decimal"
+												placeholder="0.00"
+												{...register('amount', {
+													required: t('validation.required'),
+													validate: (v) => {
+														const num = normalizeAmount(v);
+														if (num <= 0) return t('validation.amount_min');
+														return true;
+													},
+												})}
+											/>
 											<FieldError errors={[errors.amount]} />
 										</Field>
 
@@ -270,14 +278,16 @@ export function NewPayment() {
 				</div>
 			</div>
 
-		{pendingPayment && (
-			<PaymentConfirmDialog
-				open={true}
-				data={pendingPayment}
-				onClose={() => setPendingPayment(null)}
-				onConfirm={handleConfirm}
-			/>
-		)}
+			{pendingPayment && (
+				<PaymentConfirmDialog
+					open={true}
+					data={pendingPayment}
+					accounts={activeAccounts}
+					isPending={transfer.isPending}
+					onClose={() => setPendingPayment(null)}
+					onConfirm={handleConfirm}
+				/>
+			)}
 		</div>
 	);
 }
