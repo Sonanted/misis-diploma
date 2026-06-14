@@ -14,6 +14,11 @@ export class OperationController {
 		return this.operationService.findAllForUser(req.user.id, query);
 	}
 
+	@Get('summary')
+	getMonthlySummary(@Req() req: IAuthRequest) {
+		return this.operationService.getMonthlySummary(req.user.id);
+	}
+
 	@Get(':id')
 	findOne(@Req() req: IAuthRequest, @Param('id') id: string) {
 		return this.operationService.findOne(id, req.user.id);

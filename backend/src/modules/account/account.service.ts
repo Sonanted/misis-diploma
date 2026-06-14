@@ -114,7 +114,10 @@ export class AccountService {
 	}
 
 	async setPrimary(req: IAuthRequest, id: string): Promise<void> {
-		await this.findOne(req, { id });
+		const account = await this.findOne(req, { id });
+		if (account.type === EAccountType.Currency) {
+			throw new BadRequestException('Валютный счёт не может быть счётом по умолчанию');
+		}
 		await this.userService.setPrimaryAccount(req.user.id, id);
 	}
 

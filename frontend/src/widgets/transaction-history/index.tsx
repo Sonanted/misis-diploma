@@ -1,8 +1,26 @@
-import { format } from 'date-fns';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { filterTransactions } from './filter';
 import { TransactionListActions } from './transaction-list-actions';
 import { TransactionList, type TransactionItem } from './transaction-list';
+
+type UncontrolledProps = {
+	typeFilter?: never;
+	onTypeFilterChange?: never;
+	dateRange?: never;
+	onDateRangeChange?: never;
+	isFiltered?: never;
+	onReset?: never;
+};
+
+type ControlledProps = {
+	typeFilter: string;
+	onTypeFilterChange: (v: string) => void;
+	dateRange: DateRange | undefined;
+	onDateRangeChange: (r: DateRange | undefined) => void;
+	isFiltered: boolean;
+	onReset: () => void;
+};
 
 type Props = {
 	transactions: TransactionItem[];
@@ -11,7 +29,7 @@ type Props = {
 	locale?: string;
 	emptyMessage?: string;
 	getDetailUrl?: (id: string) => string;
-};
+} & (ControlledProps | UncontrolledProps);
 
 export function TransactionHistory({
 	transactions,
@@ -20,39 +38,55 @@ export function TransactionHistory({
 	locale,
 	emptyMessage,
 	getDetailUrl,
+	typeFilter: externalTypeFilter,
+	onTypeFilterChange,
+	dateRange: externalDateRange,
+	onDateRangeChange,
+	isFiltered: externalIsFiltered,
+	onReset: externalOnReset,
 }: Props) {
-	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-	const [typeFilter, setTypeFilter] = useState('all');
+	const isControlled = !!onTypeFilterChange;
 
-	const isFiltered = typeFilter !== 'all' || dateRange !== undefined;
+	const [internalTypeFilter, setInternalTypeFilter] = useState('all');
+	const [internalDateRange, setInternalDateRange] = useState<DateRange | undefined>(undefined);
 
-	const filtered = transactions.filter((tx) => {
-		if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
-		if (dateRange?.from && tx.date < format(dateRange.from, 'yyyy-MM-dd')) return false;
-		if (dateRange?.to && tx.date > format(dateRange.to, 'yyyy-MM-dd')) return false;
-		return true;
-	});
+	const typeFilter = isControlled ? (externalTypeFilter ?? 'all') : internalTypeFilter;
+	const dateRange = isControlled ? externalDateRange : internalDateRange;
+	const isFiltered = isControlled
+		? (externalIsFiltered ?? false)
+		: internalTypeFilter !== 'all' || internalDateRange !== undefined;
 
-	const resetFilters = () => {
-		setDateRange(undefined);
-		setTypeFilter('all');
-	};
+	const handleTypeChange = isControlled ? (onTypeFilterChange ?? (() => {})) : setInternalTypeFilter;
+	const handleDateChange = isControlled
+		? (onDateRangeChange ?? (() => {}))
+		: setInternalDateRange;
+	const handleReset = isControlled
+		? (externalOnReset ?? (() => {}))
+		: () => {
+				setInternalTypeFilter('all');
+				setInternalDateRange(undefined);
+			};
+
+	// When controlled, server already filtered — no client-side filtering needed
+	const displayed = isControlled
+		? transactions
+		: filterTransactions(transactions, typeFilter, dateRange);
 
 	return (
 		<div>
 			<div className="flex mb-1">
 				<TransactionListActions
 					dateRange={dateRange}
-					onDateRangeChange={setDateRange}
+					onDateRangeChange={handleDateChange}
 					typeOptions={typeOptions}
 					typeFilter={typeFilter}
-					onTypeFilterChange={setTypeFilter}
+					onTypeFilterChange={handleTypeChange}
 					isFiltered={isFiltered}
-					onReset={resetFilters}
+					onReset={handleReset}
 				/>
 			</div>
 			<TransactionList
-				transactions={filtered}
+				transactions={displayed}
 				currency={currency}
 				locale={locale}
 				emptyMessage={emptyMessage}

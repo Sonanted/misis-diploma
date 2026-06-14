@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/shared/ui/textarea';
 import type { PendingPayment } from './payment-confirm-dialog';
 import { PaymentConfirmDialog } from './payment-confirm-dialog';
+import { normalizeAmount } from './utils';
 
 type PaymentMethod = 'account' | 'phone' | 'card' | null;
 
@@ -23,12 +24,6 @@ type PaymentFormValues = {
 	recipientIdentifier: string;
 	amount: string;
 	description: string;
-};
-
-const normalizeAmount = (v: string): number => {
-	const normalized = v.trim().replace(',', '.');
-	const num = parseFloat(normalized);
-	return Number.isNaN(num) ? 0 : num;
 };
 
 export function NewPayment() {

@@ -273,6 +273,9 @@ export function Settings() {
 											{...passwordForm.register('newPassword', {
 												required: t('validation.required'),
 												minLength: { value: 8, message: t('validation.password_min') },
+												validate: (v) =>
+													v !== passwordForm.watch('currentPassword') ||
+													t('validation.password_same_as_current'),
 											})}
 										/>
 										<p className="text-xs text-muted-foreground">{t('settings.password_hint')}</p>

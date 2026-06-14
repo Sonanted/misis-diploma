@@ -20,12 +20,25 @@ export interface RecordOperationDto {
 	description?: string | null;
 }
 
+export interface MonthlySummary {
+	income: number;
+	expenses: number;
+}
+
 export interface PaginatedOperations {
 	items: Operation[];
 	total: number;
 	limit: number;
 	offset: number;
 }
+
+const CARD_OP_TYPES = [
+	EOperationType.CardIssued,
+	EOperationType.CardClosed,
+	EOperationType.CardLocked,
+	EOperationType.CardUnlocked,
+	EOperationType.CardPinChanged,
+];
 
 @Injectable()
 export class OperationService {
@@ -49,6 +62,34 @@ export class OperationService {
 		await manager.save(Operation, op);
 	}
 
+	async getMonthlySummary(userId: string): Promise<MonthlySummary> {
+		const userAccounts = await this.accountRepository.find({
+			where: { user: { id: userId } },
+			select: { id: true },
+		});
+		const accountIds = userAccounts.map((a) => a.id);
+		if (accountIds.length === 0) return { income: 0, expenses: 0 };
+
+		const now = new Date();
+		const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+		const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+		const ops = await this.operationRepository
+			.createQueryBuilder('op')
+			.where(
+				new Brackets((b) =>
+					b
+						.where('op.fromAccountId IN (:...accountIds)', { accountIds })
+						.orWhere('op.toAccountId IN (:...accountIds)', { accountIds }),
+				),
+			)
+			.andWhere('op.createdAt >= :monthStart', { monthStart })
+			.andWhere('op.createdAt < :monthEnd', { monthEnd })
+			.getMany();
+
+		return this.computeSummary(ops, new Set(accountIds));
+	}
+
 	async findAllForUser(userId: string, query: QueryOperationsDto): Promise<PaginatedOperations> {
 		const userAccounts = await this.accountRepository.find({
 			where: { user: { id: userId } },
@@ -60,7 +101,7 @@ export class OperationService {
 			return { items: [], total: 0, limit: query.limit, offset: query.offset };
 		}
 
-		const [items, total] = await this.operationRepository
+		const qb = this.operationRepository
 			.createQueryBuilder('op')
 			.where(
 				new Brackets((b) =>
@@ -69,7 +110,12 @@ export class OperationService {
 						.orWhere('op.toAccountId IN (:...accountIds)', { accountIds })
 						.orWhere('op.relatedAccountId IN (:...accountIds)', { accountIds }),
 				),
-			)
+			);
+
+		this.applyDirectionFilter(qb, query.direction, accountIds);
+		this.applyDateFilter(qb, query.dateFrom, query.dateTo);
+
+		const [items, total] = await qb
 			.orderBy('op.createdAt', 'DESC')
 			.addOrderBy('op.id', 'DESC')
 			.skip(query.offset)
@@ -89,7 +135,7 @@ export class OperationService {
 		});
 		if (!isOwner) throw new NotFoundException('Счёт не найден');
 
-		const [items, total] = await this.operationRepository
+		const qb = this.operationRepository
 			.createQueryBuilder('op')
 			.where(
 				new Brackets((b) =>
@@ -98,7 +144,25 @@ export class OperationService {
 						.orWhere('op.toAccountId = :accountId', { accountId })
 						.orWhere('op.relatedAccountId = :accountId', { accountId }),
 				),
-			)
+			);
+
+		if (query.direction) {
+			switch (query.direction) {
+				case 'incoming':
+					qb.andWhere('op.toAccountId = :accountId', { accountId });
+					break;
+				case 'outgoing':
+					qb.andWhere('op.fromAccountId = :accountId', { accountId });
+					break;
+				case 'other':
+					qb.andWhere('op.type IN (:...cardTypes)', { cardTypes: CARD_OP_TYPES });
+					break;
+			}
+		}
+
+		this.applyDateFilter(qb, query.dateFrom, query.dateTo);
+
+		const [items, total] = await qb
 			.orderBy('op.createdAt', 'DESC')
 			.addOrderBy('op.id', 'DESC')
 			.skip(query.offset)
@@ -118,11 +182,14 @@ export class OperationService {
 		});
 		if (!isOwner) throw new NotFoundException('Карта не найдена');
 
-		// Card history shows only transfers initiated via this card number
-		const [items, total] = await this.operationRepository
+		const qb = this.operationRepository
 			.createQueryBuilder('op')
 			.where('op.relatedCardId = :cardId', { cardId })
-			.andWhere('op.type = :type', { type: EOperationType.Transfer })
+			.andWhere('op.type = :type', { type: EOperationType.Transfer });
+
+		this.applyDateFilter(qb, query.dateFrom, query.dateTo);
+
+		const [items, total] = await qb
 			.orderBy('op.createdAt', 'DESC')
 			.addOrderBy('op.id', 'DESC')
 			.skip(query.offset)
@@ -150,5 +217,83 @@ export class OperationService {
 		if (!hasAccess) throw new NotFoundException('Операция не найдена');
 
 		return op;
+	}
+
+	private applyDirectionFilter(
+		qb: ReturnType<typeof this.operationRepository.createQueryBuilder>,
+		direction: QueryOperationsDto['direction'],
+		accountIds: string[],
+	): void {
+		if (!direction) return;
+
+		switch (direction) {
+			case 'incoming':
+				qb.andWhere(
+					new Brackets((b) =>
+						b
+							.where('op.type = :topup', { topup: EOperationType.Topup })
+							.orWhere(
+								'op.type = :transfer AND op.toAccountId IN (:...accountIds) AND (op.fromAccountId NOT IN (:...accountIds) OR op.fromAccountId IS NULL)',
+								{ transfer: EOperationType.Transfer, accountIds },
+							),
+					),
+				);
+				break;
+			case 'outgoing':
+				qb.andWhere(
+					new Brackets((b) =>
+						b
+							.where('op.type = :monthly', { monthly: EOperationType.MonthlyPayment })
+							.orWhere(
+								'op.type = :transfer AND op.fromAccountId IN (:...accountIds) AND (op.toAccountId NOT IN (:...accountIds) OR op.toAccountId IS NULL)',
+								{ transfer: EOperationType.Transfer, accountIds },
+							),
+					),
+				);
+				break;
+			case 'internal':
+				qb.andWhere(
+					'op.type = :transfer AND op.fromAccountId IN (:...accountIds) AND op.toAccountId IN (:...accountIds)',
+					{ transfer: EOperationType.Transfer, accountIds },
+				);
+				break;
+			case 'other':
+				qb.andWhere('op.type IN (:...cardTypes)', { cardTypes: CARD_OP_TYPES });
+				break;
+		}
+	}
+
+	private applyDateFilter(
+		qb: ReturnType<typeof this.operationRepository.createQueryBuilder>,
+		dateFrom?: string,
+		dateTo?: string,
+	): void {
+		if (dateFrom) {
+			qb.andWhere('op.createdAt >= :dateFrom', { dateFrom: new Date(dateFrom) });
+		}
+		if (dateTo) {
+			const end = new Date(dateTo);
+			end.setDate(end.getDate() + 1);
+			qb.andWhere('op.createdAt < :dateTo', { dateTo: end });
+		}
+	}
+
+	private computeSummary(ops: Operation[], accountIds: Set<string>): MonthlySummary {
+		let income = 0;
+		let expenses = 0;
+		for (const op of ops) {
+			if (op.amount === null) continue;
+			if (op.type === EOperationType.Topup) {
+				income += op.amount;
+			} else if (op.type === EOperationType.MonthlyPayment) {
+				expenses += op.amount;
+			} else if (op.type === EOperationType.Transfer) {
+				const fromOurs = op.fromAccountId !== null && accountIds.has(op.fromAccountId);
+				const toOurs = op.toAccountId !== null && accountIds.has(op.toAccountId);
+				if (fromOurs && !toOurs) expenses += op.amount;
+				else if (toOurs && !fromOurs) income += op.amount;
+			}
+		}
+		return { income, expenses };
 	}
 }

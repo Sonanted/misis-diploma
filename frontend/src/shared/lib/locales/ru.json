@@ -48,7 +48,12 @@
 			"new_password": "Новый пароль",
 			"new_password_placeholder": "Введите новый пароль",
 			"password_hint": "Не менее 8 символов.",
-			"reset_password": "Сбросить пароль"
+			"confirm_password": "Подтвердите новый пароль",
+			"confirm_password_placeholder": "Повторите новый пароль",
+			"reset_password": "Сбросить пароль",
+			"invalid_code": "Неверный или истёкший код подтверждения",
+			"reset_success": "Пароль успешно изменён",
+			"reset_error": "Не удалось изменить пароль. Попробуйте ещё раз."
 		}
 	},
 	"sidebar": {
@@ -128,6 +133,7 @@
 		"monthly_payment_confirm_description": "На текущую задолженность будут начислены ежемесячные проценты по кредиту.",
 		"monthly_payment_toast": "Проценты начислены",
 		"monthly_payment_error": "Не удалось начислить проценты",
+		"set_primary_toast": "Счёт установлен как основной",
 		"set_primary_error": "Не удалось установить счёт по умолчанию",
 		"create_card": "Выпустить карту",
 		"filter_all": "Все",
@@ -316,6 +322,7 @@
 		"email_invalid": "Введите корректный email",
 		"password_min": "Не менее 8 символов",
 		"password_mismatch": "Пароли не совпадают",
+		"password_same_as_current": "Новый пароль не должен совпадать с текущим",
 		"deposit_min": "Сумма должна быть 0 или больше",
 		"amount_min": "Сумма должна быть больше 0",
 		"amount_decimal": "Сумма может иметь не более 2 знаков после запятой",
@@ -323,7 +330,8 @@
 	},
 	"common": {
 		"cancel": "Отменить",
-		"confirm": "Подтвердить"
+		"confirm": "Подтвердить",
+		"loading": "Загрузка..."
 	},
 	"not_found": {
 		"title": "Не найдено",

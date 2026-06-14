@@ -1,12 +1,15 @@
 import axios from 'axios';
+import { format } from 'date-fns';
 import { ArrowRight, CalendarClock, CreditCard, FileText, PlusCircle, Send, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useAccount, useBankInfo, useMonthlyPayment, useSetPrimaryAccount, useUpdateAccountStatus } from '@/entities/account/queries';
 import { useCards } from '@/entities/card/queries';
 import { operationToTransactionItem } from '@/entities/operation/helpers';
+import type { AccountOperationFilters } from '@/entities/operation/queries';
 import { useAccountOperations } from '@/entities/operation/queries';
 
 interface AccountOperationsSectionProps {
@@ -16,16 +19,35 @@ interface AccountOperationsSectionProps {
 
 function AccountOperationsSection({ accountId, currency }: AccountOperationsSectionProps) {
 	const { t } = useTranslation();
-	const { data: opsData, fetchNextPage, hasNextPage, isFetchingNextPage } = useAccountOperations(accountId);
+
+	const [typeFilter, setTypeFilter] = useState('all');
+	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+	const filters: AccountOperationFilters = {
+		direction:
+			typeFilter !== 'all'
+				? (typeFilter as AccountOperationFilters['direction'])
+				: undefined,
+		dateFrom: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+		dateTo: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
+	};
+
+	const isFiltered = typeFilter !== 'all' || dateRange !== undefined;
+
+	const { data: opsData, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useAccountOperations(accountId, filters);
+
 	const TYPE_OPTIONS = [
 		{ value: 'all', label: t('operations.filter_all') },
 		{ value: 'incoming', label: t('operations.filter_incoming') },
 		{ value: 'outgoing', label: t('operations.filter_outgoing') },
 		{ value: 'other', label: t('operations.filter_other') },
 	];
+
 	const items = (opsData?.pages.flatMap((p) => p.items) ?? []).map((op) =>
 		operationToTransactionItem(op, t, new Set(), accountId),
 	);
+
 	return (
 		<Card className="gap-1">
 			<CardHeader>
@@ -38,6 +60,12 @@ function AccountOperationsSection({ accountId, currency }: AccountOperationsSect
 					currency={currency}
 					locale="ru-RU"
 					getDetailUrl={(opId) => `/operations/${opId}`}
+					typeFilter={typeFilter}
+					onTypeFilterChange={setTypeFilter}
+					dateRange={dateRange}
+					onDateRangeChange={setDateRange}
+					isFiltered={isFiltered}
+					onReset={() => { setTypeFilter('all'); setDateRange(undefined); }}
 				/>
 				{hasNextPage && (
 					<div className="mt-4 flex justify-center">
@@ -365,8 +393,11 @@ export function AccountDetail() {
 	const availableCredit = account.creditLimit != null ? account.creditLimit - account.balance : null;
 	const canCreateCard =
 		(account.type === 'checking' || account.type === 'credit') && account.status === 'active';
-	const onSetPrimaryError = () => toast.error(t('account_detail.set_primary_error'));
-	const handleSetPrimary = () => setPrimary.mutate(account.id, { onError: onSetPrimaryError });
+	const handleSetPrimary = () =>
+		setPrimary.mutate(account.id, {
+			onSuccess: () => toast.success(t('account_detail.set_primary_toast')),
+			onError: () => toast.error(t('account_detail.set_primary_error')),
+		});
 
 	return (
 		<div className="p-4 sm:p-8">

@@ -8,7 +8,9 @@
 		"build": "tsc -b && vite build",
 		"preview": "vite preview",
 		"lint": "biome check",
-		"lint:fix": "biome check --fix"
+		"lint:fix": "biome check --fix",
+		"test": "jest",
+		"test:watch": "jest --watch"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.4.0",
@@ -40,13 +42,20 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.4.12",
 		"@eslint/js": "^9.39.4",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/jest": "^30.0.0",
 		"@types/node": "^24.12.2",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.1",
 		"globals": "^17.4.0",
+		"jest": "^30.4.2",
+		"jest-environment-jsdom": "^30.4.1",
 		"shadcn": "^4.8.3",
+		"ts-jest": "^29.4.11",
 		"typescript": "~6.0.2",
-		"vite": "^8.0.4"
+		"vite": "^8.0.4",
+		"vitest": "^4.1.8"
 	}
 }

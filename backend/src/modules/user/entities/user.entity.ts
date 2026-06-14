@@ -33,6 +33,12 @@ export class User extends BaseEntity {
 	@Column({ nullable: true })
 	primaryAccountId: string | null;
 
+	@Column({ nullable: true, select: false })
+	resetCode: string | null;
+
+	@Column({ type: 'timestamptz', nullable: true, select: false })
+	resetCodeExpiresAt: Date | null;
+
 	@OneToMany(
 		() => Account,
 		(account) => account.user,

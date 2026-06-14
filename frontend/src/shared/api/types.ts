@@ -82,6 +82,11 @@ export interface ApiOperation {
 	updatedAt: string;
 }
 
+export interface MonthlySummary {
+	income: number;
+	expenses: number;
+}
+
 export interface PaginatedOperations {
 	items: ApiOperation[];
 	total: number;

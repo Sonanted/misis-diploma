@@ -1,8 +1,12 @@
+import { format } from 'date-fns';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { useTranslation } from 'react-i18next';
 import { useAccounts } from '@/entities/account/queries';
 import { operationToTransactionItem } from '@/entities/operation/helpers';
-import { useOperations } from '@/entities/operation/queries';
+import type { OperationFilters } from '@/entities/operation/queries';
+import { useOperations, useOperationsSummary } from '@/entities/operation/queries';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
 import { formatBalance } from '@/shared/helpers';
 import { Button } from '@/shared/ui/button';
@@ -14,10 +18,31 @@ export function OperationsList() {
 	const { t } = useTranslation();
 	const balanceVisible = usePrivacyStore((s) => s.balanceVisible);
 
+	const [typeFilter, setTypeFilter] = useState('all');
+	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+	const filters: OperationFilters = {
+		direction:
+			typeFilter !== 'all'
+				? (typeFilter as OperationFilters['direction'])
+				: undefined,
+		dateFrom: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+		dateTo: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
+	};
+
+	const isFiltered = typeFilter !== 'all' || dateRange !== undefined;
+
+	const resetFilters = () => {
+		setTypeFilter('all');
+		setDateRange(undefined);
+	};
+
 	const { data: accounts = [] } = useAccounts();
 	const userAccountIds = new Set(accounts.map((a) => a.id));
 
-	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useOperations();
+	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useOperations(filters);
+	const { data: summary = { income: 0, expenses: 0 } } = useOperationsSummary();
 
 	const allOps = data?.pages.flatMap((p) => p.items) ?? [];
 	const total = data?.pages[0]?.total ?? 0;
@@ -34,24 +59,7 @@ export function OperationsList() {
 		operationToTransactionItem(op, t, userAccountIds),
 	);
 
-	const financialOps = allOps.filter((op) => op.amount !== null);
 	const currency = accounts[0]?.currency ?? 'RUB';
-
-	const NEUTRAL_TYPES = new Set(['other', 'internal']);
-
-	const totalIncome = financialOps
-		.filter((op) => {
-			const dir = transactionItems.find((ti) => ti.id === op.id);
-			return dir && dir.amount > 0 && !NEUTRAL_TYPES.has(dir.type ?? '');
-		})
-		.reduce((sum, op) => sum + (op.amount ?? 0), 0);
-
-	const totalExpenses = financialOps
-		.filter((op) => {
-			const dir = transactionItems.find((ti) => ti.id === op.id);
-			return dir && dir.amount < 0 && !NEUTRAL_TYPES.has(dir.type ?? '');
-		})
-		.reduce((sum, op) => sum + (op.amount ?? 0), 0);
 
 	const fmt = (n: number) =>
 		balanceVisible ? formatBalance(n, currency) : `•••••• ${currency}`;
@@ -85,7 +93,7 @@ export function OperationsList() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<p className="text-2xl sm:text-3xl font-bold text-green-600">+{fmt(totalIncome)}</p>
+						<p className="text-2xl sm:text-3xl font-bold text-green-600">+{fmt(summary.income)}</p>
 					</CardContent>
 				</Card>
 
@@ -97,7 +105,7 @@ export function OperationsList() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<p className="text-2xl sm:text-3xl font-bold">−{fmt(totalExpenses)}</p>
+						<p className="text-2xl sm:text-3xl font-bold">−{fmt(summary.expenses)}</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -118,6 +126,12 @@ export function OperationsList() {
 						currency={currency}
 						locale="ru-RU"
 						getDetailUrl={(id) => `/operations/${id}`}
+						typeFilter={typeFilter}
+						onTypeFilterChange={setTypeFilter}
+						dateRange={dateRange}
+						onDateRangeChange={setDateRange}
+						isFiltered={isFiltered}
+						onReset={resetFilters}
 					/>
 					{hasNextPage && (
 						<div className="mt-4 flex justify-center">

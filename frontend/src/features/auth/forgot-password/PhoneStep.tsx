@@ -7,7 +7,13 @@ import { PhoneInput } from '@/shared/ui/phone-input';
 
 type PhoneFormValues = { phone: string };
 
-export function PhoneStep({ onSubmit }: { onSubmit: (data: PhoneFormValues) => void }) {
+export function PhoneStep({
+	onSubmit,
+	loading,
+}: {
+	onSubmit: (data: PhoneFormValues) => void;
+	loading?: boolean;
+}) {
 	const { t } = useTranslation();
 	const {
 		control,
@@ -40,9 +46,12 @@ export function PhoneStep({ onSubmit }: { onSubmit: (data: PhoneFormValues) => v
 					<FieldError errors={[errors.phone]} />
 				</Field>
 				<Field>
-					<Button type="submit">{t('auth.forgot_password.send_code')}</Button>
+					<Button type="submit" disabled={loading}>
+						{loading ? t('common.loading') : t('auth.forgot_password.send_code')}
+					</Button>
 					<FieldDescription className="px-6 text-center">
-						{t('auth.forgot_password.remembered')} <Link to="/login">{t('auth.forgot_password.sign_in')}</Link>
+						{t('auth.forgot_password.remembered')}{' '}
+						<Link to="/login">{t('auth.forgot_password.sign_in')}</Link>
 					</FieldDescription>
 				</Field>
 			</FieldGroup>

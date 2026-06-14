@@ -70,6 +70,12 @@ export class TransferService {
 			this.validateSource(fromAccount, dto.amount);
 			this.validateDestination(toAccount);
 
+			if (fromAccount.currency !== toAccount.currency) {
+				throw new BadRequestException(
+					`Нельзя переводить между счетами с разными валютами (${fromAccount.currency} → ${toAccount.currency})`,
+				);
+			}
+
 			const newFromBalance = parseFloat((fromAccount.balance - dto.amount).toFixed(2));
 			// Credit accounts store debt: balance = amount owed. Receiving money reduces the debt.
 			const newToBalance = toAccount.type === EAccountType.Credit

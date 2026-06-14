@@ -26,6 +26,23 @@ export class AuthService {
 		return { access_token: this.jwtService.sign(payload) };
 	}
 
+	async requestPasswordReset(phone: string): Promise<string | null> {
+		const code = Math.floor(100000 + Math.random() * 900000).toString();
+		const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+		// Returns the code only when the phone exists; null otherwise
+		// TODO: replace returned code with SMS delivery
+		return this.userService.saveResetCode(phone, code, expiresAt);
+	}
+
+	async verifyResetCode(phone: string, code: string): Promise<void> {
+		await this.userService.findByResetCode(phone, code);
+	}
+
+	async resetPassword(phone: string, code: string, newPassword: string): Promise<void> {
+		const user = await this.userService.findByResetCode(phone, code);
+		await this.userService.resetPasswordByCode(user.id, newPassword);
+	}
+
 	async validateUser(signinDto: SigninDto): Promise<User> {
 		const INVALID_CREDENTIALS = 'Неверный телефон или пароль';
 

@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	ConflictException,
 	Injectable,
 	NotFoundException,
@@ -106,6 +107,10 @@ export class UserService {
 	}
 
 	async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
+		if (dto.newPassword === dto.currentPassword) {
+			throw new BadRequestException('Новый пароль не должен совпадать с текущим');
+		}
+
 		const user = await this.findOneWithPassword({ id });
 
 		const isMatch = await this.hashService.compare(dto.currentPassword, user.password);
@@ -123,5 +128,42 @@ export class UserService {
 	async delete(id: string): Promise<User> {
 		const user = await this.findOne({ id });
 		return await this.userRepository.remove(user);
+	}
+
+	async saveResetCode(phone: string, code: string, expiresAt: Date): Promise<string | null> {
+		const user = await this.userRepository.findOne({ where: { phone } });
+		if (!user) return null;
+		await this.userRepository.update(user.id, { resetCode: code, resetCodeExpiresAt: expiresAt });
+		return code;
+	}
+
+	async findByResetCode(phone: string, code: string): Promise<User> {
+		const INVALID = 'Неверный или истёкший код';
+		const user = await this.userRepository.findOne({
+			where: { phone },
+			select: ['id', 'phone', 'resetCode', 'resetCodeExpiresAt'],
+		});
+		if (!user || user.resetCode !== code) throw new BadRequestException(INVALID);
+		if (!user.resetCodeExpiresAt || user.resetCodeExpiresAt < new Date()) {
+			throw new BadRequestException(INVALID);
+		}
+		return user;
+	}
+
+	async resetPasswordByCode(userId: string, newPassword: string): Promise<void> {
+		const user = await this.userRepository.findOne({
+			where: { id: userId },
+			select: ['id', 'password'],
+		});
+		if (user && await this.hashService.compare(newPassword, user.password)) {
+			throw new BadRequestException('Новый пароль не должен совпадать с текущим');
+		}
+
+		const hash = await this.hashService.hash(newPassword);
+		await this.userRepository.update(userId, {
+			password: hash,
+			resetCode: null,
+			resetCodeExpiresAt: null,
+		});
 	}
 }
