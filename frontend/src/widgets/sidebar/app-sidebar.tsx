@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMe } from '@/entities/user/queries';
 
 import {
 	Sidebar,
@@ -19,14 +20,9 @@ import {
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 
-const user = {
-	name: 'shadcn',
-	email: 'm@example.com',
-	avatar: '/avatars/shadcn.jpg',
-};
-
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 	const { t } = useTranslation();
+	const { data: me } = useMe();
 
 	const navItems = [
 		{ title: t('sidebar.dashboard'), url: '/', icon: <TerminalSquareIcon /> },
@@ -57,7 +53,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 			</SidebarContent>
 
 			<SidebarFooter className="border-t">
-				<NavUser user={user} />
+				<NavUser user={me} />
 			</SidebarFooter>
 		</Sidebar>
 	);

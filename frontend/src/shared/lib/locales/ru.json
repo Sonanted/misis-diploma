@@ -61,7 +61,8 @@
 		"dashboard": "Главная",
 		"cards": "Карты",
 		"operations": "Операции",
-		"payments": "Платежи"
+		"payments": "Платежи",
+		"open_settings": "Открыть настройки"
 	},
 	"accounts": {
 		"title": "Счета",
@@ -192,7 +193,10 @@
 		"pin_hide": "Скрыть PIN",
 		"pin_change_label": "Новый PIN-код",
 		"pin_submit": "Сохранить",
-		"pin_success": "PIN-код успешно изменён"
+		"pin_success": "PIN-код успешно изменён",
+		"go_to_account": "Перейти к счёту",
+		"topup": "Пополнить",
+		"transfer": "Перевести"
 	},
 	"operations": {
 		"title": "Операции",
@@ -337,5 +341,27 @@
 		"title": "Не найдено",
 		"description": "Запрашиваемый элемент не существует или был удалён.",
 		"back": "К счетам"
+	},
+	"enums": {
+		"account_type": {
+			"checking": "Расчётный",
+			"savings": "Накопительный",
+			"credit": "Кредитный",
+			"currency": "Валютный"
+		},
+		"account_status": {
+			"active": "Активен",
+			"blocked": "Заблокирован",
+			"closed": "Закрыт"
+		},
+		"card_type": {
+			"Debit": "Дебетовая",
+			"Credit": "Кредитная"
+		},
+		"card_status": {
+			"Active": "Активна",
+			"Locked": "Заблокирована",
+			"Closed": "Закрыта"
+		}
 	}
 }

@@ -40,6 +40,7 @@ interface CardFaceProps {
 }
 
 function CardFace({ card, visible, onToggle }: CardFaceProps) {
+	const { t } = useTranslation();
 	return (
 		<div
 			className="w-full max-w-sm rounded-2xl bg-linear-to-br from-slate-900 to-slate-700 text-white p-4 sm:p-6 flex flex-col justify-between shadow-xl"
@@ -48,7 +49,7 @@ function CardFace({ card, visible, onToggle }: CardFaceProps) {
 			<div className="flex justify-between items-start">
 				<CreditCardIcon className="size-6 sm:size-8" />
 				<div className="flex items-center gap-2">
-					<span className="text-xs opacity-80">{card.type}</span>
+					<span className="text-xs opacity-80">{t(`enums.card_type.${card.type}`)}</span>
 					<button
 						type="button"
 						onClick={onToggle}
@@ -129,8 +130,8 @@ export function CardDetail() {
 				<div className="flex items-start justify-between flex-wrap gap-y-2 mb-2">
 					<h1 className="text-2xl sm:text-3xl font-semibold">{card.name}</h1>
 					<div className="flex gap-2">
-						<Badge variant="secondary">{card.type}</Badge>
-						<Badge variant="outline">{card.status}</Badge>
+						<Badge variant="secondary">{t(`enums.card_type.${card.type}`)}</Badge>
+						<Badge variant="outline">{t(`enums.card_status.${card.status}`)}</Badge>
 					</div>
 				</div>
 				<p className="text-sm text-muted-foreground">{card.cardNumber}</p>
@@ -221,7 +222,7 @@ export function CardDetail() {
 				<Link to={`/accounts/${card.linkedAccountId}`} className="w-full">
 					<Button variant="outline" className="w-full">
 						<ExternalLink className="size-4 mr-2" />
-						{card.linkedAccountName}
+						{t('cards.go_to_account')}
 					</Button>
 				</Link>
 				{card.status === 'Locked' ? (

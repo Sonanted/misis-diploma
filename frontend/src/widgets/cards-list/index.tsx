@@ -74,8 +74,8 @@ export function CardsList() {
 												</div>
 											</div>
 											<div className="flex gap-2 shrink-0">
-												<Badge variant="secondary">{card.type}</Badge>
-												<Badge variant="outline">{card.status}</Badge>
+												<Badge variant="secondary">{t(`enums.card_type.${card.type}`)}</Badge>
+												<Badge variant="outline">{t(`enums.card_status.${card.status}`)}</Badge>
 											</div>
 										</div>
 									</CardHeader>

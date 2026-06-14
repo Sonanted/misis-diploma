@@ -412,7 +412,7 @@ export function AccountDetail() {
 							</Badge>
 						)}
 					</div>
-					<Badge variant="secondary">{account.type}</Badge>
+					<Badge variant="secondary">{t(`enums.account_type.${account.type}`)}</Badge>
 				</div>
 				<p className="text-sm text-muted-foreground break-all">{masked}</p>
 			</div>

@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import { CreditCard, Hash, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -196,7 +196,11 @@ export function NewPayment() {
 														</SelectTrigger>
 														<SelectContent>
 															{activeAccounts.map((account) => (
-																<SelectItem key={account.id} value={account.id}>
+																<SelectItem
+																key={account.id}
+																value={account.id}
+																textValue={`\ (\)`}
+																>
 																	{account.name} ({maskAccountNumber(account.accountNumber)}) —{' '}
 																	{formatBalance(account.balance, account.currency)}
 																</SelectItem>

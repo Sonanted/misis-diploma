@@ -1,14 +1,4 @@
 import { createBrowserRouter, Navigate } from 'react-router';
-import { AccountBreadcrumb } from './breadcrumbs';
-import { AccountDetail } from '@/widgets/account-detail';
-import { AccountsList } from '@/widgets/accounts-list';
-import { CardDetail } from '@/widgets/card-detail';
-import { CardsList } from '@/widgets/cards-list';
-import { OperationDetail } from '@/widgets/operation-detail';
-import { OperationsList } from '@/widgets/operations-list';
-import { NewPayment } from '@/widgets/payment-form';
-import PrivateLayout from '../layouts/private-layout';
-import PublicLayout from '../layouts/public-layout';
 import Cards from '@/pages/cards';
 import Dashboard from '@/pages/dashboard';
 import ForgotPassword from '@/pages/forgot-password';
@@ -17,6 +7,16 @@ import Operations from '@/pages/operations';
 import Payments from '@/pages/payments';
 import Profile from '@/pages/profile';
 import Signup from '@/pages/signup';
+import { AccountDetail } from '@/widgets/account-detail';
+import { AccountsList } from '@/widgets/accounts-list';
+import { CardDetail } from '@/widgets/card-detail';
+import { CardsList } from '@/widgets/cards-list';
+import { OperationDetail } from '@/widgets/operation-detail';
+import { OperationsList } from '@/widgets/operations-list';
+import { NewPayment } from '@/widgets/payment-form';
+import { AccountBreadcrumb, CardBreadcrumb } from './breadcrumbs';
+import PrivateLayout from '../layouts/private-layout';
+import PublicLayout from '../layouts/public-layout';
 import PrivateRoute from './guards/PrivateRoute';
 import PublicRoute from './guards/PublicRoute';
 
@@ -49,11 +49,11 @@ export const router = createBrowserRouter([
 							{
 								index: true,
 								element: <AccountsList />,
-								handle: { breadcrumb: 'Dashboard' },
+								handle: { breadcrumb: 'sidebar.dashboard' },
 							},
 							{
 								path: 'accounts',
-								handle: { breadcrumb: 'Accounts' },
+								handle: { breadcrumb: 'accounts.title' },
 								children: [
 									{
 										index: true,
@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
 					{
 						path: 'cards',
 						element: <Cards />,
-						handle: { breadcrumb: 'Cards' },
+						handle: { breadcrumb: 'sidebar.cards' },
 						children: [
 							{
 								index: true,
@@ -80,14 +80,14 @@ export const router = createBrowserRouter([
 							{
 								path: ':id',
 								element: <CardDetail />,
-								handle: { breadcrumb: ({ params }) => params.id },
+								handle: { breadcrumb: ({ params }: { params: Record<string, string | undefined> }) => <CardBreadcrumb id={params.id} /> },
 							},
 						],
 					},
 					{
 						path: 'operations',
 						element: <Operations />,
-						handle: { breadcrumb: 'Operations' },
+						handle: { breadcrumb: 'sidebar.operations' },
 						children: [
 							{
 								index: true,
@@ -103,7 +103,7 @@ export const router = createBrowserRouter([
 					{
 						path: 'payments',
 						element: <Payments />,
-						handle: { breadcrumb: 'Payments' },
+						handle: { breadcrumb: 'sidebar.payments' },
 						children: [
 							{
 								index: true,
@@ -112,9 +112,9 @@ export const router = createBrowserRouter([
 						],
 					},
 					{
-						path: 'profile',
+						path: 'settings',
 						element: <Profile />,
-						handle: { breadcrumb: 'Profile' },
+						handle: { breadcrumb: 'settings.title' },
 					},
 					{ path: '*', element: <Navigate to="/" replace /> },
 				],

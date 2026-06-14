@@ -75,7 +75,7 @@ export function AccountsList() {
 												</div>
 												<p className="text-sm text-muted-foreground mt-1">{masked}</p>
 											</div>
-											<Badge variant="secondary" className="shrink-0">{account.type}</Badge>
+											<Badge variant="secondary" className="shrink-0">{t(`enums.account_type.${account.type}`)}</Badge>
 										</div>
 									</CardHeader>
 									<CardContent>

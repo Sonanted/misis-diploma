@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useMatches } from 'react-router';
 import {
 	Breadcrumb,
@@ -16,6 +17,7 @@ type BreadcrumbHandle =
 	| ((match: { params: Record<string, string | undefined>; data: unknown }) => ReactNode);
 
 export default function SidebarInsetHeader() {
+	const { t } = useTranslation();
 	const matches = useMatches();
 
 	const breadcrumbs = matches
@@ -27,11 +29,8 @@ export default function SidebarInsetHeader() {
 				pathname: match.pathname,
 				label:
 					typeof breadcrumb === 'function'
-						? breadcrumb({
-								params: match.params,
-								data: match.data,
-							})
-						: breadcrumb,
+						? breadcrumb({ params: match.params, data: match.data })
+						: t(breadcrumb as string),
 			};
 		});
 
