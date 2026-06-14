@@ -126,11 +126,20 @@ export function CreateCardDialog({ defaultAccountId, trigger }: CreateCardDialog
 										disabled={!!defaultAccountId}
 									>
 										<SelectTrigger className="w-full">
-											<SelectValue placeholder={t('cards.account_placeholder')} />
+											<SelectValue placeholder={t('cards.account_placeholder')}>
+												{(value: string) => {
+													const acc = eligibleAccounts.find((a) => a.id === value);
+													return acc ? `${acc.name} (****${acc.accountNumber.slice(-4)})` : null;
+												}}
+											</SelectValue>
 										</SelectTrigger>
 										<SelectContent>
 											{eligibleAccounts.map((acc) => (
-												<SelectItem key={acc.id} value={acc.id}>
+												<SelectItem
+													key={acc.id}
+													value={acc.id}
+													label={`${acc.name} (****${acc.accountNumber.slice(-4)})`}
+												>
 													{acc.name} (****{acc.accountNumber.slice(-4)})
 												</SelectItem>
 											))}

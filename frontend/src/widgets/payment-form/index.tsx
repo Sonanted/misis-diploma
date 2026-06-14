@@ -192,14 +192,19 @@ export function NewPayment() {
 														}}
 													>
 														<SelectTrigger className="w-full">
-															<SelectValue placeholder={t('payments.from_account_placeholder')} />
+															<SelectValue placeholder={t('payments.from_account_placeholder')}>
+																{(value: string) => {
+																	const acc = activeAccounts.find((a) => a.id === value);
+																	return acc ? `${acc.name} (${maskAccountNumber(acc.accountNumber)})` : null;
+																}}
+															</SelectValue>
 														</SelectTrigger>
 														<SelectContent>
 															{activeAccounts.map((account) => (
 																<SelectItem
-																key={account.id}
-																value={account.id}
-																textValue={`\ (\)`}
+																	key={account.id}
+																	value={account.id}
+																	label={`${account.name} (${maskAccountNumber(account.accountNumber)})`}
 																>
 																	{account.name} ({maskAccountNumber(account.accountNumber)}) —{' '}
 																	{formatBalance(account.balance, account.currency)}
