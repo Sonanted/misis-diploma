@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/entities/user/model';
 import {
 	createAccount,
 	deleteAccount,
@@ -111,11 +110,9 @@ export function useMonthlyPayment() {
 }
 
 export function useBankInfo() {
-	const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 	return useQuery({
 		queryKey: bankInfoKeys.all,
 		queryFn: getBankInfo,
-		enabled: isAuthenticated,
 		staleTime: Number.POSITIVE_INFINITY,
 	});
 }

@@ -62,7 +62,8 @@
 		"cards": "Cards",
 		"operations": "Operations",
 		"payments": "Payments",
-		"open_settings": "Open settings"
+		"open_settings": "Open settings",
+		"logout": "Log out"
 	},
 	"accounts": {
 		"title": "Accounts",

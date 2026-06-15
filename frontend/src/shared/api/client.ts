@@ -1,27 +1,8 @@
 import axios from 'axios';
 
-// Imported lazily to avoid circular dependency with the store
-const getToken = () => {
-	try {
-		const raw = localStorage.getItem('auth');
-		if (!raw) return null;
-		const parsed = JSON.parse(raw) as { state?: { token?: string } };
-		return parsed.state?.token ?? null;
-	} catch {
-		return null;
-	}
-};
-
 export const apiClient = axios.create({
 	baseURL: import.meta.env.VITE_API_URL,
-});
-
-apiClient.interceptors.request.use((config) => {
-	const token = getToken();
-	if (token) {
-		config.headers.Authorization = `Bearer ${token}`;
-	}
-	return config;
+	withCredentials: true, // send httpOnly cookie on every request
 });
 
 apiClient.interceptors.response.use(
@@ -29,8 +10,11 @@ apiClient.interceptors.response.use(
 	(error) => {
 		if (axios.isAxiosError(error) && error.response?.status === 401) {
 			const url = error.config?.url ?? '';
-			if (!url.includes('/auth/')) {
-				localStorage.removeItem('auth');
+			// /auth/* and /users/me are allowed to return 401 without redirect:
+			// auth endpoints handle their own errors, /users/me 401 means "not logged in"
+			const isAuthEndpoint = url.includes('/auth/');
+			const isMeEndpoint = url.endsWith('/users/me');
+			if (!isAuthEndpoint && !isMeEndpoint) {
 				window.location.href = '/login';
 			}
 		}

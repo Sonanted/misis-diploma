@@ -62,7 +62,8 @@
 		"cards": "Карты",
 		"operations": "Операции",
 		"payments": "Платежи",
-		"open_settings": "Открыть настройки"
+		"open_settings": "Открыть настройки",
+		"logout": "Выйти"
 	},
 	"accounts": {
 		"title": "Счета",

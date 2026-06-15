@@ -1,5 +1,4 @@
 import { apiClient } from './client';
-import type { AuthResponse } from './types';
 
 export interface SigninDto {
 	phone: string;
@@ -15,11 +14,14 @@ export interface SignupDto {
 	password: string;
 }
 
-export const signin = (dto: SigninDto): Promise<AuthResponse> =>
-	apiClient.post<AuthResponse>('/auth/signin', dto).then((r) => r.data);
+export const signin = (dto: SigninDto): Promise<void> =>
+	apiClient.post('/auth/signin', dto).then(() => undefined);
 
-export const signup = (dto: SignupDto): Promise<AuthResponse> =>
-	apiClient.post<AuthResponse>('/auth/signup', dto).then((r) => r.data);
+export const signup = (dto: SignupDto): Promise<void> =>
+	apiClient.post('/auth/signup', dto).then(() => undefined);
+
+export const logout = (): Promise<void> =>
+	apiClient.post('/auth/logout').then(() => undefined);
 
 export const requestPasswordReset = (phone: string): Promise<{ code: string | null }> =>
 	apiClient.post<{ code: string | null }>('/auth/forgot-password/request', { phone }).then((r) => r.data);

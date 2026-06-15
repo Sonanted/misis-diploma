@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 interface AuthState {
 	isAuthenticated: boolean;
@@ -8,14 +7,11 @@ interface AuthState {
 	logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-	persist(
-		(set) => ({
-			isAuthenticated: false,
-			token: null,
-			login: (token) => set({ isAuthenticated: true, token }),
-			logout: () => set({ isAuthenticated: false, token: null }),
-		}),
-		{ name: 'auth' },
-	),
-);
+// Auth is managed via httpOnly cookie + /users/me query.
+// Token is never used at runtime — this store exists only for test compatibility.
+export const useAuthStore = create<AuthState>()((_set) => ({
+	isAuthenticated: false,
+	token: null,
+	login: () => {},
+	logout: () => {},
+}));

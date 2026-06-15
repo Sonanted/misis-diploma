@@ -16,7 +16,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 			useFactory: async (configService: CustomConfigService) => ({
 				secret: configService.jwt.secret,
 				signOptions: {
-					expiresIn: configService.jwt.expiresIn,
+					expiresIn: Math.floor(configService.jwt.expiresIn / 1000),
 				},
 			}),
 		}),
@@ -24,5 +24,6 @@ import { LocalStrategy } from './strategies/local.strategy';
 	],
 	controllers: [AuthController],
 	providers: [AuthService, LocalStrategy, JwtStrategy],
+	exports: [AuthService],
 })
 export class AuthModule {}

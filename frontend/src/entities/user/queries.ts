@@ -1,45 +1,57 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import { signin, signup } from '@/shared/api/auth';
-import { changePassword, getMe, updateMe } from '@/shared/api/users';
+import { logout as logoutApi, signin, signup } from '@/shared/api/auth';
 import type { ChangePasswordDto, UpdateUserDto } from '@/shared/api/users';
-import { useAuthStore } from './model';
+import { changePassword, getMe, updateMe } from '@/shared/api/users';
 
 export const userKeys = {
 	me: ['me'] as const,
 };
 
 export function useMe() {
-	const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 	return useQuery({
 		queryKey: userKeys.me,
 		queryFn: getMe,
-		enabled: isAuthenticated,
+		retry: false,       // 401 = not authenticated, no point retrying
+		staleTime: 5 * 60 * 1000,
 	});
 }
 
 export function useSignin() {
-	const login = useAuthStore((s) => s.login);
+	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
 	return useMutation({
 		mutationFn: signin,
-		onSuccess: (data) => {
-			login(data.access_token);
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: userKeys.me });
 			navigate('/');
 		},
 	});
 }
 
 export function useSignup() {
-	const login = useAuthStore((s) => s.login);
+	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
 	return useMutation({
 		mutationFn: signup,
-		onSuccess: (data) => {
-			login(data.access_token);
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: userKeys.me });
 			navigate('/');
+		},
+	});
+}
+
+export function useLogout() {
+	const queryClient = useQueryClient();
+	const navigate = useNavigate();
+
+	return useMutation({
+		mutationFn: logoutApi,
+		onSuccess: () => {
+			queryClient.clear();
+			navigate('/login');
 		},
 	});
 }
