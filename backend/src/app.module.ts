@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from './config/config.module';
+import { CustomConfigService } from './config/config.service';
 import { AccountModule } from './modules/account/account.module';
 import { Account } from './modules/account/entities/account.entity';
 import { AuthModule } from './modules/auth/auth.module';
@@ -16,16 +17,19 @@ import { UserModule } from './modules/user/user.module';
 	imports: [
 		ConfigModule,
 
-		TypeOrmModule.forRoot({
-			type: 'postgres',
-			host: 'localhost',
-			port: 5432,
-			username: 'postgres',
-			password: 'postgres',
-			database: 'diploma-db',
-			entities: [User, Account, Card, Operation],
-			migrations: ['dist/src/database/migrations/*.js'],
-			synchronize: true,
+		TypeOrmModule.forRootAsync({
+			inject: [CustomConfigService],
+			useFactory: (config: CustomConfigService) => ({
+				type: 'postgres',
+				host: config.db.host,
+				port: config.db.port,
+				username: config.db.username,
+				password: config.db.password,
+				database: config.db.name,
+				entities: [User, Account, Card, Operation],
+				migrations: ['dist/src/database/migrations/*.js'],
+				synchronize: true,
+			}),
 		}),
 
 		AuthModule,

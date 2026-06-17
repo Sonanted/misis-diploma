@@ -5,6 +5,12 @@ export const envSchema = z.object({
 	JWT_EXPIRES_IN_MS: z.coerce.number({ error: 'JWT_EXPIRES_IN is required number' }),
 	SALT_ROUNDS: z.coerce.number({ error: 'SALT_ROUNDS is required number' }).default(10),
 	TOPUP_PASSWORD: z.string({ error: 'TOPUP_PASSWORD is required string' }),
+	DB_HOST: z.string({ error: 'DB_HOST is required string' }),
+	DB_PORT: z.coerce.number({ error: 'DB_PORT is required number' }),
+	DB_USERNAME: z.string({ error: 'DB_USERNAME is required string' }),
+	DB_PASSWORD: z.string({ error: 'DB_PASSWORD is required string' }),
+	DB_NAME: z.string({ error: 'DB_NAME is required string' }),
+	FRONTEND_URL: z.string({ error: 'FRONTEND_URL is required string' }),
 });
 
 export type Env = z.infer<typeof envSchema>;

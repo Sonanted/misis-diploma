@@ -25,4 +25,18 @@ export class CustomConfigService {
 	get topupPassword() {
 		return this.get('TOPUP_PASSWORD');
 	}
+
+	get db() {
+		return {
+			host: this.get('DB_HOST'),
+			port: this.get('DB_PORT'),
+			username: this.get('DB_USERNAME'),
+			password: this.get('DB_PASSWORD'),
+			name: this.get('DB_NAME'),
+		};
+	}
+
+	get frontendUrl() {
+		return this.get('FRONTEND_URL');
+	}
 }
