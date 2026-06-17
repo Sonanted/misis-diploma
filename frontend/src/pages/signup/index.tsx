@@ -14,6 +14,7 @@ import { PhoneInput } from '@/shared/ui/phone-input';
 type SignupFormValues = {
 	firstName: string;
 	lastName: string;
+	middleName?: string;
 	phone: string;
 	email: string;
 	password: string;
@@ -36,8 +37,11 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 		toast.error(isConflict ? t('auth.signup.error_conflict') : t('auth.signup.error'));
 	};
 
-	const onSubmit = ({ confirmPassword: _, ...data }: SignupFormValues) => {
-		signupMutation.mutate(data, { onError: handleError });
+	const onSubmit = ({ confirmPassword: _, middleName, ...data }: SignupFormValues) => {
+		signupMutation.mutate(
+			{ ...data, ...(middleName ? { middleName } : {}) },
+			{ onError: handleError },
+		);
 	};
 
 	return (
@@ -55,7 +59,7 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 							</FieldLabel>
 							<Input
 								type="text"
-								placeholder="John"
+								placeholder={t('auth.signup.first_name_placeholder')}
 								{...register('firstName', { required: t('validation.required') })}
 							/>
 							<FieldError errors={[errors.firstName]} />
@@ -67,10 +71,19 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 							</FieldLabel>
 							<Input
 								type="text"
-								placeholder="Doe"
+								placeholder={t('auth.signup.last_name_placeholder')}
 								{...register('lastName', { required: t('validation.required') })}
 							/>
 							<FieldError errors={[errors.lastName]} />
+						</Field>
+
+						<Field>
+							<FieldLabel>{t('auth.signup.middle_name')}</FieldLabel>
+							<Input
+								type="text"
+								placeholder={t('auth.signup.middle_name_placeholder')}
+								{...register('middleName')}
+							/>
 						</Field>
 
 						<Field data-invalid={!!errors.phone}>
@@ -96,11 +109,14 @@ export default function Signup({ ...props }: ComponentProps<typeof Card>) {
 						</Field>
 
 						<Field data-invalid={!!errors.email}>
-							<FieldLabel>{t('auth.signup.email')}</FieldLabel>
+							<FieldLabel>
+								{t('auth.signup.email')} <span className="text-destructive">*</span>
+							</FieldLabel>
 							<Input
 								type="email"
 								placeholder={t('auth.signup.email_placeholder')}
 								{...register('email', {
+									required: t('validation.required'),
 									pattern: {
 										value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 										message: t('validation.email_invalid'),

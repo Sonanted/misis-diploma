@@ -14,6 +14,7 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
+import { PhoneInput } from '@/shared/ui/phone-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Textarea } from '@/shared/ui/textarea';
 import type { ConversionInfo, PendingPayment } from './payment-confirm-dialog';
@@ -258,11 +259,29 @@ export function NewPayment() {
 
 										<Field data-invalid={!!errors.recipientIdentifier}>
 											<FieldLabel>{getRecipientLabel()} *</FieldLabel>
-											<Input
-												type={selectedMethod === 'phone' ? 'tel' : 'text'}
-												placeholder={getPlaceholder()}
-												{...register('recipientIdentifier', { required: t('validation.required') })}
-											/>
+											{selectedMethod === 'phone' ? (
+												<Controller
+													name="recipientIdentifier"
+													control={control}
+													rules={{ required: t('validation.required') }}
+													render={({ field }) => (
+														<PhoneInput
+															value={field.value ?? ''}
+															onChange={field.onChange}
+															onBlur={field.onBlur}
+															international
+															defaultCountry="RU"
+															placeholder={t('payments.phone_placeholder')}
+														/>
+													)}
+												/>
+											) : (
+												<Input
+													type="text"
+													placeholder={getPlaceholder()}
+													{...register('recipientIdentifier', { required: t('validation.required') })}
+												/>
+											)}
 											{selectedMethod === 'phone' && (
 												<p className="text-xs text-muted-foreground">{t('payments.phone_hint')}</p>
 											)}

@@ -13,12 +13,17 @@ vi.mock('@/entities/user/queries', () => ({
 describe('Signup page', () => {
 	it('renders first name field', () => {
 		renderWithRouter(<Signup />);
-		expect(screen.getByPlaceholderText('John')).toBeInTheDocument();
+		expect(screen.getByPlaceholderText('auth.signup.first_name_placeholder')).toBeInTheDocument();
 	});
 
 	it('renders last name field', () => {
 		renderWithRouter(<Signup />);
-		expect(screen.getByPlaceholderText('Doe')).toBeInTheDocument();
+		expect(screen.getByPlaceholderText('auth.signup.last_name_placeholder')).toBeInTheDocument();
+	});
+
+	it('renders optional middle name field', () => {
+		renderWithRouter(<Signup />);
+		expect(screen.getByPlaceholderText('auth.signup.middle_name_placeholder')).toBeInTheDocument();
 	});
 
 	it('renders password fields', () => {
@@ -56,8 +61,8 @@ describe('Signup page', () => {
 
 	it('fills firstName and lastName', async () => {
 		renderWithRouter(<Signup />);
-		const firstName = screen.getByPlaceholderText('John');
-		const lastName = screen.getByPlaceholderText('Doe');
+		const firstName = screen.getByPlaceholderText('auth.signup.first_name_placeholder');
+		const lastName = screen.getByPlaceholderText('auth.signup.last_name_placeholder');
 		await userEvent.type(firstName, 'Ivan');
 		await userEvent.type(lastName, 'Petrov');
 		expect(firstName).toHaveValue('Ivan');
