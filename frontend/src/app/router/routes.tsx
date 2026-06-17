@@ -1,24 +1,41 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
-import Cards from '@/pages/cards';
-import Dashboard from '@/pages/dashboard';
-import ForgotPassword from '@/pages/forgot-password';
-import Login from '@/pages/login';
-import Operations from '@/pages/operations';
-import Payments from '@/pages/payments';
-import Profile from '@/pages/profile';
-import Signup from '@/pages/signup';
-import { AccountDetail } from '@/widgets/account-detail';
-import { AccountsList } from '@/widgets/accounts-list';
-import { CardDetail } from '@/widgets/card-detail';
-import { CardsList } from '@/widgets/cards-list';
-import { OperationDetail } from '@/widgets/operation-detail';
-import { OperationsList } from '@/widgets/operations-list';
-import { NewPayment } from '@/widgets/payment-form';
-import { AccountBreadcrumb, CardBreadcrumb } from './breadcrumbs';
 import PrivateLayout from '../layouts/private-layout';
 import PublicLayout from '../layouts/public-layout';
+import { AccountBreadcrumb, CardBreadcrumb } from './breadcrumbs';
 import PrivateRoute from './guards/PrivateRoute';
 import PublicRoute from './guards/PublicRoute';
+
+const Cards = lazy(() => import('@/pages/cards'));
+const Dashboard = lazy(() => import('@/pages/dashboard'));
+const ForgotPassword = lazy(() => import('@/pages/forgot-password'));
+const Login = lazy(() => import('@/pages/login'));
+const Operations = lazy(() => import('@/pages/operations'));
+const Payments = lazy(() => import('@/pages/payments'));
+const Profile = lazy(() => import('@/pages/profile'));
+const Signup = lazy(() => import('@/pages/signup'));
+
+const AccountDetail = lazy(() =>
+	import('@/widgets/account-detail').then((m) => ({ default: m.AccountDetail })),
+);
+const AccountsList = lazy(() =>
+	import('@/widgets/accounts-list').then((m) => ({ default: m.AccountsList })),
+);
+const CardDetail = lazy(() =>
+	import('@/widgets/card-detail').then((m) => ({ default: m.CardDetail })),
+);
+const CardsList = lazy(() =>
+	import('@/widgets/cards-list').then((m) => ({ default: m.CardsList })),
+);
+const OperationDetail = lazy(() =>
+	import('@/widgets/operation-detail').then((m) => ({ default: m.OperationDetail })),
+);
+const OperationsList = lazy(() =>
+	import('@/widgets/operations-list').then((m) => ({ default: m.OperationsList })),
+);
+const NewPayment = lazy(() =>
+	import('@/widgets/payment-form').then((m) => ({ default: m.NewPayment })),
+);
 
 export const router = createBrowserRouter([
 	{
@@ -80,7 +97,11 @@ export const router = createBrowserRouter([
 							{
 								path: ':id',
 								element: <CardDetail />,
-								handle: { breadcrumb: ({ params }: { params: Record<string, string | undefined> }) => <CardBreadcrumb id={params.id} /> },
+								handle: {
+									breadcrumb: ({ params }: { params: Record<string, string | undefined> }) => (
+										<CardBreadcrumb id={params.id} />
+									),
+								},
 							},
 						],
 					},

@@ -1,3 +1,5 @@
+import { Loader2 } from 'lucide-react';
+import { Suspense } from 'react';
 import { Outlet } from 'react-router';
 import { LanguageSwitcherCompact, useLanguage } from '@/shared/ui/language-switcher-compact';
 import { ThemeSwitcherCompact, useTheme } from '@/shared/ui/theme-switcher-compact';
@@ -13,7 +15,9 @@ export default function PublicLayout() {
 				<LanguageSwitcherCompact lang={lang} onChange={changeLanguage} />
 			</div>
 			<div className="w-full max-w-sm">
-				<Outlet />
+				<Suspense fallback={<Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />}>
+					<Outlet />
+				</Suspense>
 			</div>
 		</div>
 	);
