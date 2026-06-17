@@ -1,10 +1,13 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { CheckIcon, ChevronsUpDown } from 'lucide-react';
 import {
 	type ComponentProps,
 	type ComponentRef,
 	type ForwardRefExoticComponent,
 	forwardRef,
-	useRef,
+	memo,
+	useCallback,
+	useMemo,
 	useState,
 } from 'react';
 import * as RPNInput from 'react-phone-number-input';
@@ -42,15 +45,6 @@ const PhoneInput: ForwardRefExoticComponent<PhoneInputProps> = forwardRef<
 			inputComponent={InputComponent}
 			smartCaret={false}
 			value={value || undefined}
-			/**
-			 * Handles the onChange event.
-			 *
-			 * react-phone-number-input might trigger the onChange event as undefined
-			 * when a valid phone number is not entered. To prevent this,
-			 * the value is coerced to an empty string.
-			 *
-			 * @param {E164Number | undefined} value - The entered value
-			 */
 			onChange={(value) => onChange?.(value || ('' as RPNInput.Value))}
 			{...props}
 		/>
@@ -80,9 +74,35 @@ const CountrySelect = ({
 	options: countryList,
 	onChange,
 }: CountrySelectProps) => {
-	const scrollAreaRef = useRef<HTMLDivElement>(null);
 	const [searchValue, setSearchValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
+	const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+
+	const filteredCountries = useMemo(() => {
+		const valid = countryList.filter((c): c is { label: string; value: RPNInput.Country } =>
+			Boolean(c.value),
+		);
+		if (!searchValue) return valid;
+		const lower = searchValue.toLowerCase();
+		return valid.filter(
+			({ value, label }) =>
+				label.toLowerCase().includes(lower) || value.toLowerCase().includes(lower),
+		);
+	}, [countryList, searchValue]);
+
+	const virtualizer = useVirtualizer({
+		count: filteredCountries.length,
+		getScrollElement: () => scrollElement,
+		estimateSize: () => 36,
+		overscan: 5,
+	});
+
+	const handleChange = useCallback(
+		(country: RPNInput.Country) => onChange(country),
+		[onChange],
+	);
+
+	const handleSelectComplete = useCallback(() => setIsOpen(false), []);
 
 	return (
 		<Popover
@@ -109,42 +129,56 @@ const CountrySelect = ({
 				}
 			/>
 			<PopoverContent className="w-75 p-0">
-				<Command>
+				<Command shouldFilter={false} className="pr-0">
 					<CommandInput
 						value={searchValue}
 						onValueChange={(value) => {
 							setSearchValue(value);
-							setTimeout(() => {
-								if (scrollAreaRef.current) {
-									const viewportElement = scrollAreaRef.current.querySelector(
-										'[data-radix-scroll-area-viewport]',
-									);
-									if (viewportElement) {
-										viewportElement.scrollTop = 0;
-									}
-								}
-							}, 0);
+							if (scrollElement) scrollElement.scrollTop = 0;
 						}}
 						placeholder="Search country..."
 					/>
-					<CommandList>
-						<ScrollArea ref={scrollAreaRef} className="h-72">
+					<CommandList className="max-h-none overflow-visible">
+						{filteredCountries.length === 0 ? (
 							<CommandEmpty>No country found.</CommandEmpty>
-							<CommandGroup>
-								{countryList.map(({ value, label }) =>
-									value ? (
-										<CountrySelectOption
-											key={value}
-											country={value}
-											countryName={label}
-											selectedCountry={selectedCountry}
-											onChange={onChange}
-											onSelectComplete={() => setIsOpen(false)}
-										/>
-									) : null,
-								)}
+						) : (
+							<CommandGroup className="p-0">
+								<ScrollArea className="h-72" viewportRef={setScrollElement}>
+									<div
+										style={{
+											height: `${virtualizer.getTotalSize()}px`,
+											position: 'relative',
+										}}
+									>
+										{virtualizer.getVirtualItems().map((virtualItem) => {
+											const item = filteredCountries[virtualItem.index];
+											return (
+												<div
+													key={virtualItem.key}
+													data-index={virtualItem.index}
+													ref={virtualizer.measureElement}
+													style={{
+														position: 'absolute',
+														top: 0,
+														left: 0,
+														width: '100%',
+														transform: `translateY(${virtualItem.start}px)`,
+													}}
+												>
+													<CountrySelectOption
+														country={item.value}
+														countryName={item.label}
+														selectedCountry={selectedCountry}
+														onChange={handleChange}
+														onSelectComplete={handleSelectComplete}
+													/>
+												</div>
+											);
+										})}
+									</div>
+								</ScrollArea>
 							</CommandGroup>
-						</ScrollArea>
+						)}
 					</CommandList>
 				</Command>
 			</PopoverContent>
@@ -158,7 +192,7 @@ interface CountrySelectOptionProps extends RPNInput.FlagProps {
 	onSelectComplete: () => void;
 }
 
-const CountrySelectOption = ({
+const CountrySelectOption = memo(({
 	country,
 	countryName,
 	selectedCountry,
@@ -180,7 +214,8 @@ const CountrySelectOption = ({
 			/>
 		</CommandItem>
 	);
-};
+});
+CountrySelectOption.displayName = 'CountrySelectOption';
 
 const FlagComponent = ({ country, countryName }: RPNInput.FlagProps) => {
 	const Flag = flags[country];

@@ -14,5 +14,5 @@ export function CardBreadcrumb({ id }: { id?: string }) {
 
 export function OperationBreadcrumb({ id }: { id?: string }) {
 	const { data } = useOperation(id ?? '');
-	return <>{data?.description ?? id}</>;
+	return <>{data?.type ?? id}</>;
 }
