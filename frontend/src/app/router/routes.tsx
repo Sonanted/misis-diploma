@@ -2,7 +2,7 @@ import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import PrivateLayout from '../layouts/private-layout';
 import PublicLayout from '../layouts/public-layout';
-import { AccountBreadcrumb, CardBreadcrumb } from './breadcrumbs';
+import { AccountBreadcrumb, CardBreadcrumb, OperationBreadcrumb } from './breadcrumbs';
 import PrivateRoute from './guards/PrivateRoute';
 import PublicRoute from './guards/PublicRoute';
 
@@ -79,7 +79,11 @@ export const router = createBrowserRouter([
 									{
 										path: ':id',
 										element: <AccountDetail />,
-										handle: { breadcrumb: ({ params }) => <AccountBreadcrumb id={params.id} /> },
+										handle: {
+											breadcrumb: ({ params }: { params: Record<string, string | undefined> }) => (
+												<AccountBreadcrumb id={params.id} />
+											),
+										},
 									},
 								],
 							},
@@ -117,7 +121,11 @@ export const router = createBrowserRouter([
 							{
 								path: ':id',
 								element: <OperationDetail />,
-								handle: { breadcrumb: ({ params }) => params.id },
+								handle: {
+									breadcrumb: ({ params }: { params: Record<string, string | undefined> }) => (
+										<OperationBreadcrumb id={params.id} />
+									),
+								},
 							},
 						],
 					},

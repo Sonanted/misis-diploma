@@ -11,6 +11,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Account } from '../account/entities/account.entity';
 import { IAuthRequest } from '../auth/interfaces/IAuthRequest';
 import { Card } from '../card/entities/card.entity';
+import { CurrencyRateService } from '../currency-rate/currency-rate.service';
 import { OperationService } from '../operation/operation.service';
 import { UserService } from '../user/user.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
@@ -19,6 +20,7 @@ export interface TransferResult {
 	fromAccountId: string;
 	toAccountId: string;
 	amount: number;
+	toAmount: number;
 }
 
 interface ResolvedDestination {
@@ -35,6 +37,7 @@ export class TransferService {
 		private readonly cardRepository: Repository<Card>,
 		private readonly userService: UserService,
 		private readonly operationService: OperationService,
+		private readonly currencyRateService: CurrencyRateService,
 		private readonly dataSource: DataSource,
 	) {}
 
@@ -70,21 +73,29 @@ export class TransferService {
 			this.validateSource(fromAccount, dto.amount);
 			this.validateDestination(toAccount);
 
-			if (fromAccount.currency !== toAccount.currency) {
-				throw new BadRequestException(
-					`Нельзя переводить между счетами с разными валютами (${fromAccount.currency} → ${toAccount.currency})`,
-				);
-			}
+			const fromAmount = dto.amount;
+			const toAmount = await this.currencyRateService.convert(
+				fromAmount,
+				fromAccount.currency,
+				toAccount.currency,
+			);
 
-			const newFromBalance = parseFloat((fromAccount.balance - dto.amount).toFixed(2));
+			const newFromBalance = parseFloat((fromAccount.balance - fromAmount).toFixed(2));
 			// Credit accounts store debt: balance = amount owed. Receiving money reduces the debt.
-			const newToBalance = toAccount.type === EAccountType.Credit
-				? parseFloat((toAccount.balance - dto.amount).toFixed(2))
-				: parseFloat((toAccount.balance + dto.amount).toFixed(2));
+			const newToBalance =
+				toAccount.type === EAccountType.Credit
+					? parseFloat((toAccount.balance - toAmount).toFixed(2))
+					: parseFloat((toAccount.balance + toAmount).toFixed(2));
 
 			if (toAccount.type === EAccountType.Credit && newToBalance < 0) {
 				throw new BadRequestException('Сумма перевода превышает задолженность по кредитному счёту');
 			}
+
+			const isCrossCurrency = fromAccount.currency !== toAccount.currency;
+			const description =
+				isCrossCurrency
+					? `${dto.description ? `${dto.description} | ` : ''}Конвертация: ${fromAmount} ${fromAccount.currency} → ${toAmount} ${toAccount.currency}`
+					: (dto.description ?? null);
 
 			await manager.update(Account, { id: fromAccount.id }, { balance: newFromBalance });
 			await manager.update(Account, { id: toAccount.id }, { balance: newToBalance });
@@ -92,18 +103,36 @@ export class TransferService {
 			// Record operation inside the same transaction so a failed save rolls back the transfer
 			await this.operationService.recordWithManager(manager, {
 				type: EOperationType.Transfer,
-				amount: dto.amount,
+				amount: fromAmount,
 				fromAccountId: fromAccount.id,
 				fromAccountNumber: fromAccount.accountNumber,
 				toAccountId: toAccount.id,
 				toAccountNumber: toAccount.accountNumber,
 				relatedCardId: destination.cardId,
 				userId: req.user.id,
-				description: dto.description ?? null,
+				description,
+				currency: fromAccount.currency,
 			});
 
-			return { fromAccountId: fromAccount.id, toAccountId: toAccount.id, amount: dto.amount };
+			return {
+				fromAccountId: fromAccount.id,
+				toAccountId: toAccount.id,
+				amount: fromAmount,
+				toAmount,
+			};
 		});
+	}
+
+	async getDestinationCurrency(
+		method: 'account' | 'phone' | 'card',
+		recipientIdentifier: string,
+	): Promise<{ toCurrency: string }> {
+		const destination = await this.resolveDestination(method, recipientIdentifier);
+		const account = await this.accountRepository.findOne({
+			where: { id: destination.accountId },
+		});
+		if (!account) throw new NotFoundException('Счёт не найден');
+		return { toCurrency: account.currency };
 	}
 
 	// Uses QueryBuilder instead of findOne so the lock applies only to the "account" table,

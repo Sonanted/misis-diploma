@@ -5,6 +5,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ApiUser } from '@/shared/api/types';
 import { NavUser } from '../nav-user';
 
+vi.mock('@/entities/user/queries', () => ({
+	useLogout: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}));
+
 vi.mock('@/shared/ui/sidebar', () => ({
 	SidebarMenu: ({ children }: { children: ReactNode }) => <ul>{children}</ul>,
 	SidebarMenuItem: ({ children }: { children: ReactNode }) => <li>{children}</li>,

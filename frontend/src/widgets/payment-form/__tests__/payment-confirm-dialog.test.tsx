@@ -4,6 +4,11 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PaymentConfirmDialog } from '../payment-confirm-dialog';
 
+vi.mock('@/shared/helpers', () => ({
+	formatBalance: vi.fn((val: number, currency: string) => `${val} ${currency}`),
+	maskAccountNumber: vi.fn((num: string) => `•• ${num.slice(-4)}`),
+}));
+
 vi.mock('@/shared/ui/dialog', () => ({
 	Dialog: ({ open, children }: { open: boolean; children: ReactNode }) =>
 		open ? <div role="dialog">{children}</div> : null,
@@ -39,6 +44,7 @@ function renderDialog(overrides?: Partial<typeof defaultData>) {
 			open={true}
 			data={{ ...defaultData, ...overrides }}
 			accounts={mockAccounts}
+			conversionInfo={null}
 			isPending={false}
 			onClose={onClose}
 			onConfirm={onConfirm}
@@ -59,6 +65,7 @@ describe('PaymentConfirmDialog', () => {
 				open={false}
 				data={defaultData}
 				accounts={mockAccounts}
+				conversionInfo={null}
 				isPending={false}
 				onClose={vi.fn()}
 				onConfirm={vi.fn()}
@@ -99,7 +106,7 @@ describe('PaymentConfirmDialog', () => {
 
 	it('renders amount', () => {
 		renderDialog();
-		expect(screen.getByText('1500')).toBeInTheDocument();
+		expect(screen.getByText('1500 RUB')).toBeInTheDocument();
 	});
 
 	it('renders description when provided', () => {
@@ -130,6 +137,7 @@ describe('PaymentConfirmDialog', () => {
 				open={true}
 				data={defaultData}
 				accounts={mockAccounts}
+				conversionInfo={null}
 				isPending={true}
 				onClose={vi.fn()}
 				onConfirm={vi.fn()}

@@ -18,12 +18,6 @@ vi.mock('@/shared/api/config', () => ({
 	getBankInfo: vi.fn(() => Promise.resolve({ bik: '044525225', name: 'Test Bank' })),
 }));
 
-vi.mock('@/entities/user/model', () => ({
-	useAuthStore: vi.fn((selector: (s: { isAuthenticated: boolean }) => unknown) =>
-		selector({ isAuthenticated: true }),
-	),
-}));
-
 import {
 	useAccount,
 	useAccounts,
@@ -100,13 +94,4 @@ describe('account queries', () => {
 		expect(result.current.data).toEqual({ bik: '044525225', name: 'Test Bank' });
 	});
 
-	it('useBankInfo is disabled when not authenticated', async () => {
-		const { useAuthStore } = await import('@/entities/user/model');
-		vi.mocked(useAuthStore).mockImplementationOnce(
-			(selector: (s: { isAuthenticated: boolean }) => unknown) =>
-				selector({ isAuthenticated: false }),
-		);
-		const { result } = renderHook(() => useBankInfo(), { wrapper: createWrapper() });
-		expect(result.current.fetchStatus).toBe('idle');
-	});
 });

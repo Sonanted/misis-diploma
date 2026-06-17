@@ -16,6 +16,8 @@ export type TransactionItem = {
 	type?: string;
 	fromAccountNumber?: string | null;
 	toAccountNumber?: string | null;
+	/** Per-item currency; overrides the list-level currency prop */
+	currency?: string;
 };
 
 type Props = {
@@ -43,6 +45,7 @@ function TransactionCard({ transaction, currency, locale, url }: TransactionCard
 		transaction.fromAccountNumber && transaction.toAccountNumber
 			? `${maskAccountNumber(transaction.fromAccountNumber)} → ${maskAccountNumber(transaction.toAccountNumber)}`
 			: null;
+	const displayCurrency = transaction.currency ?? currency;
 
 	const content = (
 		<div>
@@ -67,8 +70,8 @@ function TransactionCard({ transaction, currency, locale, url }: TransactionCard
 				</div>
 				<p className={`font-semibold shrink-0 ${amountColor}`}>
 					{balanceVisible
-						? `${amountPrefix}${Math.abs(transaction.amount).toLocaleString(locale, { minimumFractionDigits: 2 })} ${currency}`
-						: `•••• ${currency}`}
+						? `${amountPrefix}${Math.abs(transaction.amount).toLocaleString(locale, { minimumFractionDigits: 2 })} ${displayCurrency}`
+						: `•••• ${displayCurrency}`}
 				</p>
 			</div>
 			<p className="text-sm text-muted-foreground mt-1">{transaction.date}</p>

@@ -108,6 +108,7 @@ export class AccountService {
 			fromAccountNumber: account.accountNumber,
 			userId: req.user.id,
 			description: 'Начисление процентов по кредиту',
+			currency: account.currency,
 		});
 
 		return this.findOne(req, { id });
@@ -181,6 +182,7 @@ export class AccountService {
 			toAccountNumber: account.accountNumber,
 			userId: req.user.id,
 			description: isCredit ? 'Погашение кредита' : 'Пополнение счёта',
+			currency: account.currency,
 		});
 
 		return this.findOne(req, { id });

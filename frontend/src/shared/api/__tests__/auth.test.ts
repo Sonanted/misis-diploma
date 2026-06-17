@@ -20,16 +20,15 @@ describe('auth API', () => {
 		vi.clearAllMocks();
 	});
 
-	it('signin calls POST /auth/signin and returns data', async () => {
+	it('signin calls POST /auth/signin and returns undefined (cookie auth)', async () => {
 		const dto = { phone: '+79001234567', password: 'pass' };
-		const mockData = { access_token: 'token_123' };
-		mockApiClient.post.mockResolvedValue({ data: mockData });
+		mockApiClient.post.mockResolvedValue({});
 		const result = await signin(dto);
 		expect(mockApiClient.post).toHaveBeenCalledWith('/auth/signin', dto);
-		expect(result).toEqual(mockData);
+		expect(result).toBeUndefined();
 	});
 
-	it('signup calls POST /auth/signup and returns data', async () => {
+	it('signup calls POST /auth/signup and returns undefined (cookie auth)', async () => {
 		const dto = {
 			firstName: 'John',
 			lastName: 'Doe',
@@ -37,11 +36,10 @@ describe('auth API', () => {
 			email: 'john@example.com',
 			password: 'pass',
 		};
-		const mockData = { access_token: 'token_123' };
-		mockApiClient.post.mockResolvedValue({ data: mockData });
+		mockApiClient.post.mockResolvedValue({});
 		const result = await signup(dto);
 		expect(mockApiClient.post).toHaveBeenCalledWith('/auth/signup', dto);
-		expect(result).toEqual(mockData);
+		expect(result).toBeUndefined();
 	});
 
 	it('requestPasswordReset calls POST /auth/forgot-password/request and returns data', async () => {

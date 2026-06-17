@@ -82,10 +82,7 @@ export interface ApiOperation {
 	updatedAt: string;
 }
 
-export interface MonthlySummary {
-	income: number;
-	expenses: number;
-}
+export type MonthlySummary = Partial<Record<EAccountCurrency, { income: number; expenses: number }>>;
 
 export interface PaginatedOperations {
 	items: ApiOperation[];

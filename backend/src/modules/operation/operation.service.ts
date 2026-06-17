@@ -18,12 +18,11 @@ export interface RecordOperationDto {
 	relatedAccountId?: string | null;
 	userId: string;
 	description?: string | null;
+	currency?: string | null;
 }
 
-export interface MonthlySummary {
-	income: number;
-	expenses: number;
-}
+export type CurrencySummaryEntry = { income: number; expenses: number };
+export type MonthlySummary = Record<string, CurrencySummaryEntry>;
 
 export interface PaginatedOperations {
 	items: Operation[];
@@ -65,10 +64,12 @@ export class OperationService {
 	async getMonthlySummary(userId: string): Promise<MonthlySummary> {
 		const userAccounts = await this.accountRepository.find({
 			where: { user: { id: userId } },
-			select: { id: true },
+			select: { id: true, currency: true },
 		});
 		const accountIds = userAccounts.map((a) => a.id);
-		if (accountIds.length === 0) return { income: 0, expenses: 0 };
+		if (accountIds.length === 0) return { RUB: { income: 0, expenses: 0 } };
+
+		const accountCurrencyMap = new Map(userAccounts.map((a) => [a.id, a.currency as string]));
 
 		const now = new Date();
 		const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -87,7 +88,7 @@ export class OperationService {
 			.andWhere('op.createdAt < :monthEnd', { monthEnd })
 			.getMany();
 
-		return this.computeSummary(ops, new Set(accountIds));
+		return this.computeSummary(ops, new Set(accountIds), accountCurrencyMap);
 	}
 
 	async findAllForUser(userId: string, query: QueryOperationsDto): Promise<PaginatedOperations> {
@@ -278,22 +279,70 @@ export class OperationService {
 		}
 	}
 
-	private computeSummary(ops: Operation[], accountIds: Set<string>): MonthlySummary {
-		let income = 0;
-		let expenses = 0;
+	private computeSummary(
+		ops: Operation[],
+		accountIds: Set<string>,
+		accountCurrencyMap: Map<string, string>,
+	): MonthlySummary {
+		const result: MonthlySummary = { RUB: { income: 0, expenses: 0 } };
+
 		for (const op of ops) {
-			if (op.amount === null) continue;
-			if (op.type === EOperationType.Topup) {
-				income += op.amount;
-			} else if (op.type === EOperationType.MonthlyPayment) {
-				expenses += op.amount;
-			} else if (op.type === EOperationType.Transfer) {
-				const fromOurs = op.fromAccountId !== null && accountIds.has(op.fromAccountId);
-				const toOurs = op.toAccountId !== null && accountIds.has(op.toAccountId);
-				if (fromOurs && !toOurs) expenses += op.amount;
-				else if (toOurs && !fromOurs) income += op.amount;
+			if (op.amount !== null) {
+				this.applyOpToSummary(result, op, accountIds, accountCurrencyMap);
 			}
 		}
-		return { income, expenses };
+
+		return result;
+	}
+
+	private applyOpToSummary(
+		result: MonthlySummary,
+		op: Operation,
+		accountIds: Set<string>,
+		accountCurrencyMap: Map<string, string>,
+	): void {
+		const ensure = (c: string) => { if (!result[c]) result[c] = { income: 0, expenses: 0 }; };
+		const amount = op.amount as number;
+
+		if (op.type === EOperationType.Topup) {
+			const c = op.currency ?? accountCurrencyMap.get(op.toAccountId ?? '') ?? 'RUB';
+			ensure(c);
+			result[c].income += amount;
+			return;
+		}
+
+		if (op.type === EOperationType.MonthlyPayment) {
+			const c = op.currency ?? accountCurrencyMap.get(op.fromAccountId ?? '') ?? 'RUB';
+			ensure(c);
+			result[c].expenses += amount;
+			return;
+		}
+
+		if (op.type === EOperationType.Transfer) {
+			this.applyTransferToSummary(result, op, amount, accountIds, accountCurrencyMap);
+		}
+	}
+
+	private applyTransferToSummary(
+		result: MonthlySummary,
+		op: Operation,
+		amount: number,
+		accountIds: Set<string>,
+		accountCurrencyMap: Map<string, string>,
+	): void {
+		const ensure = (c: string) => { if (!result[c]) result[c] = { income: 0, expenses: 0 }; };
+		const fromOurs = op.fromAccountId !== null && accountIds.has(op.fromAccountId);
+		const toOurs = op.toAccountId !== null && accountIds.has(op.toAccountId);
+
+		if (fromOurs && !toOurs) {
+			const c = op.currency ?? accountCurrencyMap.get(op.fromAccountId ?? '') ?? 'RUB';
+			ensure(c);
+			result[c].expenses += amount;
+		} else if (toOurs && !fromOurs) {
+			// Resolve to receiving account's currency for correct bucketing
+			const c = accountCurrencyMap.get(op.toAccountId ?? '') ?? op.currency ?? 'RUB';
+			ensure(c);
+			result[c].income += amount;
+		}
 	}
 }

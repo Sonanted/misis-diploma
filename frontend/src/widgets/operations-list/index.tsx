@@ -11,6 +11,7 @@ import { usePrivacyStore } from '@/features/balance-visibility/model';
 import { formatBalance } from '@/shared/helpers';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Separator } from '@/shared/ui/separator';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { TransactionHistory } from '@/widgets/transaction-history';
 
@@ -39,13 +40,22 @@ export function OperationsList() {
 
 	const { data: accounts = [] } = useAccounts();
 	const userAccountIds = new Set(accounts.map((a) => a.id));
+	const accountCurrencyMap = new Map(accounts.map((a) => [a.id, a.currency]));
 
 	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useOperations(filters);
-	const { data: summary = { income: 0, expenses: 0 } } = useOperationsSummary();
+	const { data: summary } = useOperationsSummary();
 
 	const allOps = data?.pages.flatMap((p) => p.items) ?? [];
 	const total = data?.pages[0]?.total ?? 0;
+
+	const CURRENCY_ORDER = ['RUB', 'USD', 'EUR'] as const;
+	const summaryEntries = CURRENCY_ORDER
+		.filter((c) => {
+			const entry = summary?.[c];
+			return c === 'RUB' || (entry && (entry.income > 0 || entry.expenses > 0));
+		})
+		.map((c) => ({ currency: c, ...(summary?.[c] ?? { income: 0, expenses: 0 }) }));
 
 	const TYPE_FILTER_OPTIONS = [
 		{ value: 'all', label: t('operations.filter_all') },
@@ -56,13 +66,11 @@ export function OperationsList() {
 	];
 
 	const transactionItems = allOps.map((op) =>
-		operationToTransactionItem(op, t, userAccountIds),
+		operationToTransactionItem(op, t, userAccountIds, null, accountCurrencyMap),
 	);
 
-	const currency = accounts[0]?.currency ?? 'RUB';
-
-	const fmt = (n: number) =>
-		balanceVisible ? formatBalance(n, currency) : `•••••• ${currency}`;
+	const fmt = (n: number, c: string) =>
+		balanceVisible ? formatBalance(n, c as Parameters<typeof formatBalance>[1]) : `•••••• ${c}`;
 
 	if (isLoading) {
 		return (
@@ -92,8 +100,13 @@ export function OperationsList() {
 							{t('operations.income_this_month')}
 						</CardTitle>
 					</CardHeader>
-					<CardContent>
-						<p className="text-2xl sm:text-3xl font-bold text-green-600">+{fmt(summary.income)}</p>
+					<CardContent className="space-y-2">
+						{summaryEntries.map(({ currency: c, income }, i) => (
+							<div key={c}>
+								{i > 0 && <Separator className="mb-2" />}
+								<p className="text-2xl sm:text-3xl font-bold text-green-600">+{fmt(income, c)}</p>
+							</div>
+						))}
 					</CardContent>
 				</Card>
 
@@ -104,8 +117,13 @@ export function OperationsList() {
 							{t('operations.expenses_this_month')}
 						</CardTitle>
 					</CardHeader>
-					<CardContent>
-						<p className="text-2xl sm:text-3xl font-bold">−{fmt(summary.expenses)}</p>
+					<CardContent className="space-y-2">
+						{summaryEntries.map(({ currency: c, expenses }, i) => (
+							<div key={c}>
+								{i > 0 && <Separator className="mb-2" />}
+								<p className="text-2xl sm:text-3xl font-bold">−{fmt(expenses, c)}</p>
+							</div>
+						))}
 					</CardContent>
 				</Card>
 			</div>
@@ -123,7 +141,7 @@ export function OperationsList() {
 					<TransactionHistory
 						transactions={transactionItems}
 						typeOptions={TYPE_FILTER_OPTIONS}
-						currency={currency}
+						currency={accounts[0]?.currency ?? 'RUB'}
 						locale="ru-RU"
 						getDetailUrl={(id) => `/operations/${id}`}
 						typeFilter={typeFilter}

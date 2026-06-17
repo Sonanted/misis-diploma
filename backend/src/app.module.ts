@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from './config/config.module';
 import { CustomConfigService } from './config/config.service';
+import { CurrencyRateModule } from './modules/currency-rate/currency-rate.module';
 import { AccountModule } from './modules/account/account.module';
 import { Account } from './modules/account/entities/account.entity';
 import { AuthModule } from './modules/auth/auth.module';
@@ -32,6 +33,7 @@ import { UserModule } from './modules/user/user.module';
 			}),
 		}),
 
+		CurrencyRateModule,
 		AuthModule,
 		UserModule,
 		AccountModule,

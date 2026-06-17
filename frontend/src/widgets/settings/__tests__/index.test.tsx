@@ -23,12 +23,7 @@ vi.mock('@/entities/user/queries', () => ({
 	})),
 	useUpdateMe: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 	useChangePassword: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-}));
-
-vi.mock('@/entities/user/model', () => ({
-	useAuthStore: vi.fn((selector: (s: { logout: () => void }) => unknown) =>
-		selector({ logout: mockLogout }),
-	),
+	useLogout: vi.fn(() => ({ mutate: mockLogout, isPending: false })),
 }));
 
 vi.mock('@/shared/ui/language-switcher-compact', () => ({
@@ -109,11 +104,10 @@ describe('Settings', () => {
 		expect(screen.getByText('settings.logout')).toBeInTheDocument();
 	});
 
-	it('calls logout and navigates on logout click', async () => {
+	it('calls logout mutate on logout click', async () => {
 		renderSettings();
 		await userEvent.click(screen.getByText('settings.logout'));
 		expect(mockLogout).toHaveBeenCalled();
-		expect(mockNavigate).toHaveBeenCalledWith('/login');
 	});
 
 	it('renders save personal info button', () => {

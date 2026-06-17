@@ -1,58 +1,37 @@
 import { renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { useAuthStore } from '../model';
-import { useAuth } from '../use-auth';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-function makeJwt(expOffsetMs: number): string {
-	const payload = { exp: Math.floor((Date.now() + expOffsetMs) / 1000) };
-	const encoded = btoa(JSON.stringify(payload));
-	return `header.${encoded}.signature`;
-}
+vi.mock('../queries', () => ({
+	useMe: vi.fn(),
+}));
+
+import { useMe } from '../queries';
+import { useAuth } from '../use-auth';
 
 describe('useAuth', () => {
 	beforeEach(() => {
-		useAuthStore.setState({ isAuthenticated: false, token: null });
+		vi.clearAllMocks();
 	});
 
-	it('returns false when not authenticated', () => {
+	it('returns isAuthenticated false when useMe has no data', () => {
+		vi.mocked(useMe).mockReturnValue({ data: undefined, isLoading: false } as ReturnType<typeof useMe>);
 		const { result } = renderHook(() => useAuth());
-		expect(result.current).toBe(false);
+		expect(result.current.isAuthenticated).toBe(false);
+		expect(result.current.isLoading).toBe(false);
 	});
 
-	it('returns true with a valid non-expired token', () => {
-		const token = makeJwt(60 * 60 * 1000); // expires in 1 hour
-		useAuthStore.setState({ isAuthenticated: true, token });
+	it('returns isAuthenticated true when useMe returns user data', () => {
+		vi.mocked(useMe).mockReturnValue({
+			data: { id: 'usr_1', firstName: 'John' },
+			isLoading: false,
+		} as ReturnType<typeof useMe>);
 		const { result } = renderHook(() => useAuth());
-		expect(result.current).toBe(true);
+		expect(result.current.isAuthenticated).toBe(true);
 	});
 
-	it('returns false when token is expired', () => {
-		const token = makeJwt(-5000); // expired 5 seconds ago
-		useAuthStore.setState({ isAuthenticated: true, token });
+	it('reflects isLoading state from useMe', () => {
+		vi.mocked(useMe).mockReturnValue({ data: undefined, isLoading: true } as ReturnType<typeof useMe>);
 		const { result } = renderHook(() => useAuth());
-		expect(result.current).toBe(false);
-	});
-
-	it('calls logout when token is expired', () => {
-		const token = makeJwt(-5000);
-		useAuthStore.setState({ isAuthenticated: true, token });
-		renderHook(() => useAuth());
-		expect(useAuthStore.getState().isAuthenticated).toBe(false);
-		expect(useAuthStore.getState().token).toBeNull();
-	});
-
-	it('returns false with a malformed token', () => {
-		useAuthStore.setState({ isAuthenticated: true, token: 'not.a.jwt' });
-		const { result } = renderHook(() => useAuth());
-		expect(result.current).toBe(false);
-	});
-
-	it('returns true when token has no exp claim (treated as non-expiring)', () => {
-		const payload = { sub: 'user1' }; // no exp field
-		const token = `h.${btoa(JSON.stringify(payload))}.s`;
-		useAuthStore.setState({ isAuthenticated: true, token });
-		const { result } = renderHook(() => useAuth());
-		// isTokenExpired: typeof payload.exp === 'number' → false → not expired
-		expect(result.current).toBe(true);
+		expect(result.current.isLoading).toBe(true);
 	});
 });

@@ -12,6 +12,7 @@ vi.mock('@/entities/user/queries', () => ({
 	useMe: vi.fn(() => ({ data: undefined, isLoading: false })),
 	useUpdateMe: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 	useChangePassword: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useLogout: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 vi.mock('@/entities/account/queries', () => ({
 	useAccounts: vi.fn(() => ({ data: [], isLoading: false })),

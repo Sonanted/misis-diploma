@@ -2,6 +2,7 @@ import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import type { IAuthRequest } from '../auth/interfaces/IAuthRequest';
 import { CreateTransferDto } from './dto/create-transfer.dto';
+import { ResolveDestinationDto } from './dto/resolve-destination.dto';
 import { TransferResult, TransferService } from './transfer.service';
 
 @UseGuards(JwtAuthGuard)
@@ -12,5 +13,10 @@ export class TransferController {
 	@Post()
 	transfer(@Req() req: IAuthRequest, @Body() dto: CreateTransferDto): Promise<TransferResult> {
 		return this.transferService.transfer(req, dto);
+	}
+
+	@Post('resolve-destination')
+	resolveDestination(@Body() dto: ResolveDestinationDto): Promise<{ toCurrency: string }> {
+		return this.transferService.getDestinationCurrency(dto.method, dto.recipientIdentifier);
 	}
 }

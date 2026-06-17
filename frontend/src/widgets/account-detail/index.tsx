@@ -44,8 +44,9 @@ function AccountOperationsSection({ accountId, currency }: AccountOperationsSect
 		{ value: 'other', label: t('operations.filter_other') },
 	];
 
+	const accountCurrencyMap = new Map([[accountId, currency]]);
 	const items = (opsData?.pages.flatMap((p) => p.items) ?? []).map((op) =>
-		operationToTransactionItem(op, t, new Set(), accountId),
+		operationToTransactionItem(op, t, new Set(), accountId, accountCurrencyMap),
 	);
 
 	return (

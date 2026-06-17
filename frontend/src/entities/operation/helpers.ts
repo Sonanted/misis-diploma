@@ -8,8 +8,12 @@ export function operationToTransactionItem(
 	t: (key: string) => string,
 	userAccountIds: Set<string>,
 	viewAccountId?: string | null,
+	accountCurrencyMap?: Map<string, string>,
 ): TransactionItem {
 	const direction = resolveDirection(op, userAccountIds, viewAccountId);
+	const currency = accountCurrencyMap
+		? resolveCurrency(op, direction, accountCurrencyMap)
+		: undefined;
 
 	const signedAmount =
 		op.amount !== null
@@ -29,7 +33,22 @@ export function operationToTransactionItem(
 		typeLabel: t(`operations.type_${op.type}`),
 		fromAccountNumber: op.fromAccountNumber ?? null,
 		toAccountNumber: op.toAccountNumber ?? null,
+		currency,
 	};
+}
+
+function resolveCurrency(
+	op: ApiOperation,
+	direction: Direction,
+	map: Map<string, string>,
+): string | undefined {
+	if (op.type === 'topup') return map.get(op.toAccountId ?? '');
+	if (op.type === 'monthly_payment') return map.get(op.fromAccountId ?? '');
+	if (op.type === 'transfer') {
+		if (direction === 'outgoing' || direction === 'internal') return map.get(op.fromAccountId ?? '');
+		if (direction === 'incoming') return map.get(op.toAccountId ?? '');
+	}
+	return undefined;
 }
 
 function resolveDirectionForAccount(op: ApiOperation, viewAccountId: string): Direction {

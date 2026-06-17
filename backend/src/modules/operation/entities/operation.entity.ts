@@ -52,4 +52,7 @@ export class Operation extends BaseEntity {
 
 	@Column({ nullable: true })
 	description: string | null;
+
+	@Column({ nullable: true })
+	currency: string | null;
 }

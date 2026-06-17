@@ -272,7 +272,10 @@
 		"confirm_title": "Confirm Transfer",
 		"cancel": "Cancel",
 		"toast_success": "Transfer sent successfully!",
-		"toast_error": "An error occurred while sending the transfer"
+		"toast_error": "An error occurred while sending the transfer",
+		"resolving": "Checking recipient...",
+		"conversion_title": "Currency conversion",
+		"conversion_cbr": "CBR rate as of"
 	},
 	"settings": {
 		"title": "Settings",

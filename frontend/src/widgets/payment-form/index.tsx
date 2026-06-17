@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useAccounts } from '@/entities/account/queries';
 import { useTransfer } from '@/entities/transfer/queries';
+import { getCurrencyRates } from '@/shared/api/currency-rates';
+import { resolveDestinationCurrency } from '@/shared/api/transfers';
+import type { EAccountCurrency } from '@/shared/api/types';
 import { formatBalance, maskAccountNumber } from '@/shared/helpers';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -13,7 +16,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Textarea } from '@/shared/ui/textarea';
-import type { PendingPayment } from './payment-confirm-dialog';
+import type { ConversionInfo, PendingPayment } from './payment-confirm-dialog';
 import { PaymentConfirmDialog } from './payment-confirm-dialog';
 import { normalizeAmount } from './utils';
 
@@ -34,6 +37,8 @@ export function NewPayment() {
 	const { data: accounts = [] } = useAccounts();
 	const activeAccounts = accounts.filter((a) => a.status === 'active' && a.type !== 'credit');
 	const transfer = useTransfer();
+	const [conversionInfo, setConversionInfo] = useState<ConversionInfo | null>(null);
+	const [isResolving, setIsResolving] = useState(false);
 
 	const {
 		register,
@@ -48,15 +53,47 @@ export function NewPayment() {
 		reset();
 	};
 
-	const onSubmit = (data: PaymentFormValues) => {
+	const onSubmit = async (data: PaymentFormValues) => {
 		if (!selectedMethod) return;
-		setPendingPayment({
+		const amount = normalizeAmount(data.amount);
+		const payment: PendingPayment = {
 			method: selectedMethod,
 			fromAccountId: data.fromAccountId,
 			recipientIdentifier: data.recipientIdentifier,
-			amount: normalizeAmount(data.amount),
+			amount,
 			description: data.description,
-		});
+		};
+
+		setIsResolving(true);
+		try {
+			const fromAccount = activeAccounts.find((a) => a.id === data.fromAccountId);
+			const { toCurrency } = await resolveDestinationCurrency({
+				method: selectedMethod,
+				recipientIdentifier: data.recipientIdentifier,
+			});
+
+			if (fromAccount && toCurrency !== fromAccount.currency) {
+				const ratesData = await getCurrencyRates();
+				const fromRate = ratesData.rates[fromAccount.currency];
+				const toRate = ratesData.rates[toCurrency as EAccountCurrency];
+				const toAmount = parseFloat(((amount * fromRate) / toRate).toFixed(2));
+				setConversionInfo({
+					fromCurrency: fromAccount.currency,
+					toCurrency: toCurrency as EAccountCurrency,
+					fromAmount: amount,
+					toAmount,
+					updatedAt: ratesData.updatedAt,
+				});
+			} else {
+				setConversionInfo(null);
+			}
+		} catch {
+			setConversionInfo(null);
+		} finally {
+			setIsResolving(false);
+		}
+
+		setPendingPayment(payment);
 	};
 
 	const handleConfirm = () => {
@@ -74,11 +111,13 @@ export function NewPayment() {
 				onSuccess: () => {
 					toast.success(t('payments.toast_success'));
 					setPendingPayment(null);
+					setConversionInfo(null);
 					reset();
 					setSelectedMethod(null);
 				},
 				onError: (error) => {
 					setPendingPayment(null);
+					setConversionInfo(null);
 					if (axios.isAxiosError(error)) {
 						const message: string = error.response?.data?.message ?? t('payments.toast_error');
 						toast.error(message);
@@ -262,9 +301,9 @@ export function NewPayment() {
 									</FieldGroup>
 
 									<div className="pt-4">
-										<Button type="submit" className="w-full" size="lg">
+										<Button type="submit" className="w-full" size="lg" disabled={isResolving}>
 											<Send className="size-4 mr-2" />
-											{t('payments.send')}
+											{isResolving ? t('payments.resolving') : t('payments.send')}
 										</Button>
 									</div>
 								</form>
@@ -287,8 +326,9 @@ export function NewPayment() {
 					open={true}
 					data={pendingPayment}
 					accounts={activeAccounts}
+					conversionInfo={conversionInfo}
 					isPending={transfer.isPending}
-					onClose={() => setPendingPayment(null)}
+					onClose={() => { setPendingPayment(null); setConversionInfo(null); }}
 					onConfirm={handleConfirm}
 				/>
 			)}

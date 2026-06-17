@@ -9,9 +9,9 @@ interface AuthState {
 
 // Auth is managed via httpOnly cookie + /users/me query.
 // Token is never used at runtime — this store exists only for test compatibility.
-export const useAuthStore = create<AuthState>()((_set) => ({
+export const useAuthStore = create<AuthState>()((set) => ({
 	isAuthenticated: false,
 	token: null,
-	login: () => {},
-	logout: () => {},
+	login: (token) => set({ isAuthenticated: true, token }),
+	logout: () => set({ isAuthenticated: false, token: null }),
 }));
