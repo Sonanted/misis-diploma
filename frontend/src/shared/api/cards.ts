@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { ApiCard, ApiCardDetail, ECardStatus } from './types';
+import type { ApiCard, ApiCardDetail, ApiCardPin, ApiCardReveal, ECardStatus } from './types';
 
 export interface CreateCardDto {
 	name: string;
@@ -28,3 +28,9 @@ export interface ChangeCardPinDto {
 
 export const changeCardPin = (id: string, dto: ChangeCardPinDto): Promise<void> =>
 	apiClient.patch(`/cards/${id}/pin`, dto).then(() => undefined);
+
+export const revealCard = (id: string): Promise<ApiCardReveal> =>
+	apiClient.get<ApiCardReveal>(`/cards/${id}/reveal`).then((r) => r.data);
+
+export const getCardPin = (id: string): Promise<ApiCardPin> =>
+	apiClient.get<ApiCardPin>(`/cards/${id}/pin`).then((r) => r.data);

@@ -8,7 +8,7 @@ const mockApiClient = vi.hoisted(() => ({
 
 vi.mock('../client', () => ({ apiClient: mockApiClient }));
 
-import { changeCardPin, createCard, getCard, getCards, updateCardStatus } from '../cards';
+import { changeCardPin, createCard, getCard, getCardPin, getCards, revealCard, updateCardStatus } from '../cards';
 
 describe('cards API', () => {
 	beforeEach(() => {
@@ -54,5 +54,21 @@ describe('cards API', () => {
 		const result = await changeCardPin('card_1', { pin: '4321' });
 		expect(mockApiClient.patch).toHaveBeenCalledWith('/cards/card_1/pin', { pin: '4321' });
 		expect(result).toBeUndefined();
+	});
+
+	it('revealCard calls GET /cards/:id/reveal and returns data', async () => {
+		const mockData = { fullNumber: '4111111111111234', cvv: '123' };
+		mockApiClient.get.mockResolvedValue({ data: mockData });
+		const result = await revealCard('card_1');
+		expect(mockApiClient.get).toHaveBeenCalledWith('/cards/card_1/reveal');
+		expect(result).toEqual(mockData);
+	});
+
+	it('getCardPin calls GET /cards/:id/pin and returns data', async () => {
+		const mockData = { pin: '1234' };
+		mockApiClient.get.mockResolvedValue({ data: mockData });
+		const result = await getCardPin('card_1');
+		expect(mockApiClient.get).toHaveBeenCalledWith('/cards/card_1/pin');
+		expect(result).toEqual(mockData);
 	});
 });

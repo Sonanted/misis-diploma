@@ -5,8 +5,9 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/shared/api/auth', () => ({
-	signin: vi.fn(() => Promise.resolve({ access_token: 'token' })),
-	signup: vi.fn(() => Promise.resolve({ access_token: 'token' })),
+	signin: vi.fn(() => Promise.resolve(undefined)),
+	signup: vi.fn(() => Promise.resolve(undefined)),
+	logout: vi.fn(() => Promise.resolve(undefined)),
 }));
 
 vi.mock('@/shared/api/users', () => ({
@@ -15,7 +16,14 @@ vi.mock('@/shared/api/users', () => ({
 	changePassword: vi.fn(() => Promise.resolve(undefined)),
 }));
 
-import { useChangePassword, useMe, useSignin, useSignup, useUpdateMe } from '../queries';
+import {
+	useChangePassword,
+	useLogout,
+	useMe,
+	useSignin,
+	useSignup,
+	useUpdateMe,
+} from '../queries';
 
 function createWrapper() {
 	const queryClient = new QueryClient({
@@ -35,24 +43,45 @@ describe('user queries', () => {
 		expect(result.current.data).toEqual({ id: 'usr_1', firstName: 'John' });
 	});
 
-	it('useSignin returns mutation object', () => {
+	it('useSignin calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useSignin(), { wrapper: createWrapper() });
+		result.current.mutate({ phone: '+79001234567', password: 'pass' });
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
+	});
+
+	it('useSignup calls mutationFn and onSuccess', async () => {
+		const { result } = renderHook(() => useSignup(), { wrapper: createWrapper() });
+		result.current.mutate({
+			firstName: 'John',
+			lastName: 'Doe',
+			phone: '+79001234567',
+			email: 'john@example.com',
+			password: 'pass',
+		});
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
+	});
+
+	it('useLogout returns mutation object', () => {
+		const { result } = renderHook(() => useLogout(), { wrapper: createWrapper() });
 		expect(result.current.mutate).toBeTypeOf('function');
 		expect(result.current.isPending).toBe(false);
 	});
 
-	it('useSignup returns mutation object', () => {
-		const { result } = renderHook(() => useSignup(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+	it('useLogout calls mutationFn and onSuccess', async () => {
+		const { result } = renderHook(() => useLogout(), { wrapper: createWrapper() });
+		result.current.mutate();
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useUpdateMe returns mutation object', () => {
+	it('useUpdateMe calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useUpdateMe(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate({ firstName: 'Jane' });
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useChangePassword returns mutation object', () => {
+	it('useChangePassword calls mutationFn and succeeds', async () => {
 		const { result } = renderHook(() => useChangePassword(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate({ oldPassword: 'old', newPassword: 'new' });
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 });

@@ -8,6 +8,7 @@ const mockApiClient = vi.hoisted(() => ({
 vi.mock('../client', () => ({ apiClient: mockApiClient }));
 
 import {
+	logout,
 	requestPasswordReset,
 	resetPassword,
 	signin,
@@ -70,6 +71,13 @@ describe('auth API', () => {
 			code: '1234',
 			newPassword: 'newPass123',
 		});
+		expect(result).toBeUndefined();
+	});
+
+	it('logout calls POST /auth/logout and returns undefined', async () => {
+		mockApiClient.post.mockResolvedValue({});
+		const result = await logout();
+		expect(mockApiClient.post).toHaveBeenCalledWith('/auth/logout');
 		expect(result).toBeUndefined();
 	});
 });

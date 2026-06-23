@@ -1,8 +1,8 @@
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { cloneElement, isValidElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useChangeCardPin } from '@/entities/card/queries';
+import { useCardPin, useChangeCardPin } from '@/entities/card/queries';
 import { Button } from '@/shared/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/ui/input-otp';
@@ -10,16 +10,17 @@ import { Separator } from '@/shared/ui/separator';
 
 interface PinDialogProps {
 	cardId: string;
-	pin: string;
 	trigger: React.ReactNode;
 }
 
-export function PinDialog({ cardId, pin, trigger }: PinDialogProps) {
+export function PinDialog({ cardId, trigger }: PinDialogProps) {
 	const { t } = useTranslation();
 	const [open, setOpen] = useState(false);
 	const [pinVisible, setPinVisible] = useState(false);
 	const [newPin, setNewPin] = useState('');
 	const changePin = useChangeCardPin();
+
+	const { data: pinData, isFetching: isPinLoading } = useCardPin(cardId, open);
 
 	const handleOpenChange = (next: boolean) => {
 		setOpen(next);
@@ -61,17 +62,23 @@ export function PinDialog({ cardId, pin, trigger }: PinDialogProps) {
 						<div className="flex flex-col items-center gap-3">
 							<p className="text-sm text-muted-foreground">{t('cards.pin_current_label')}</p>
 							<div className="flex items-center gap-3">
-								<p className="font-mono text-2xl tracking-[0.5em]">
-									{pinVisible ? pin : '••••'}
-								</p>
-								<button
-									type="button"
-									onClick={() => setPinVisible((v) => !v)}
-									className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-									aria-label={pinVisible ? t('cards.pin_hide') : t('cards.pin_show')}
-								>
-									{pinVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-								</button>
+								{isPinLoading ? (
+									<Loader2 className="size-5 animate-spin text-muted-foreground" />
+								) : (
+									<>
+										<p className="font-mono text-2xl tracking-[0.5em]">
+											{pinVisible ? (pinData?.pin ?? '••••') : '••••'}
+										</p>
+										<button
+											type="button"
+											onClick={() => setPinVisible((v) => !v)}
+											className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+											aria-label={pinVisible ? t('cards.pin_hide') : t('cards.pin_show')}
+										>
+											{pinVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+										</button>
+									</>
+								)}
 							</div>
 						</div>
 

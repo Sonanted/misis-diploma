@@ -57,35 +57,40 @@ describe('account queries', () => {
 		expect(result.current.fetchStatus).toBe('idle');
 	});
 
-	it('useCreateAccount returns mutation object', () => {
+	it('useCreateAccount calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useCreateAccount(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
-		expect(result.current.isPending).toBe(false);
+		result.current.mutate({ name: 'New Account', type: 'checking', currency: 'RUB' });
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useTopupAccount returns mutation object', () => {
+	it('useTopupAccount calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useTopupAccount(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate({ id: 'acc_1', dto: { amount: 500, password: 'pass' } });
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useSetPrimaryAccount returns mutation object', () => {
+	it('useSetPrimaryAccount calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useSetPrimaryAccount(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate('acc_1');
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useUpdateAccountStatus returns mutation object', () => {
+	it('useUpdateAccountStatus calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useUpdateAccountStatus(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate({ id: 'acc_1', dto: { status: 'Closed' } });
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useDeleteAccount returns mutation object', () => {
+	it('useDeleteAccount calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useDeleteAccount(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate('acc_1');
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
-	it('useMonthlyPayment returns mutation object', () => {
+	it('useMonthlyPayment calls mutationFn and onSuccess', async () => {
 		const { result } = renderHook(() => useMonthlyPayment(), { wrapper: createWrapper() });
-		expect(result.current.mutate).toBeTypeOf('function');
+		result.current.mutate('acc_1');
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 	});
 
 	it('useBankInfo returns data when authenticated', async () => {

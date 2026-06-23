@@ -39,9 +39,12 @@ export interface CardListItem {
 	linkedAccountName: string;
 }
 
-export interface CardDetail extends CardListItem {
+export interface CardReveal {
 	fullNumber: string;
 	cvv: string;
+}
+
+export interface CardPin {
 	pin: string;
 }
 
@@ -64,12 +67,25 @@ export class CardService {
 		return cards.map((card) => this.toListItem(card));
 	}
 
-	async findOne(req: IAuthRequest, id: string): Promise<CardDetail> {
+	async findOne(req: IAuthRequest, id: string): Promise<CardListItem> {
 		const card = await this.loadCard(req, id);
-		return this.toDetail(card);
+		return this.toListItem(card);
 	}
 
-	async create(req: IAuthRequest, dto: CreateCardDto): Promise<CardDetail> {
+	async revealCardData(req: IAuthRequest, id: string): Promise<CardReveal> {
+		const card = await this.loadCard(req, id);
+		return {
+			fullNumber: this.formatCardNumber(card.cardNumber),
+			cvv: card.cvv,
+		};
+	}
+
+	async revealPin(req: IAuthRequest, id: string): Promise<CardPin> {
+		const card = await this.loadCard(req, id);
+		return { pin: card.pin };
+	}
+
+	async create(req: IAuthRequest, dto: CreateCardDto): Promise<CardListItem> {
 		const account = await this.accountService.findOne(req, { id: dto.accountId });
 
 		if (account.status !== EAccountStatus.Active) {
@@ -118,7 +134,7 @@ export class CardService {
 		return this.findOne(req, card.id);
 	}
 
-	async updateStatus(req: IAuthRequest, id: string, dto: UpdateCardStatusDto): Promise<CardDetail> {
+	async updateStatus(req: IAuthRequest, id: string, dto: UpdateCardStatusDto): Promise<CardListItem> {
 		const card = await this.loadCard(req, id);
 
 		if (card.status === ECardStatus.Closed) {
@@ -194,15 +210,6 @@ export class CardService {
 			cardHolder: this.cardHolderName(card),
 			linkedAccountId: card.account.id,
 			linkedAccountName: card.account.name,
-		};
-	}
-
-	private toDetail(card: Card): CardDetail {
-		return {
-			...this.toListItem(card),
-			fullNumber: this.formatCardNumber(card.cardNumber),
-			cvv: card.cvv,
-			pin: card.pin,
 		};
 	}
 

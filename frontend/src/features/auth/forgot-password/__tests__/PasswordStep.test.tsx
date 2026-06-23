@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/test-utils';
@@ -59,5 +59,15 @@ describe('PasswordStep', () => {
 		await userEvent.click(screen.getByRole('button', { name: 'auth.forgot_password.reset_password' }));
 		const error = await screen.findByText('validation.password_mismatch');
 		expect(error).toBeInTheDocument();
+	});
+
+	it('calls onSubmit with newPassword when passwords match', async () => {
+		const onSubmit = vi.fn();
+		renderWithRouter(<PasswordStep onSubmit={onSubmit} />);
+		const [newPw, confirmPw] = document.querySelectorAll('input[type="password"]');
+		await userEvent.type(newPw, 'Password123');
+		await userEvent.type(confirmPw, 'Password123');
+		await userEvent.click(screen.getByRole('button', { name: 'auth.forgot_password.reset_password' }));
+		await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ newPassword: 'Password123' }));
 	});
 });

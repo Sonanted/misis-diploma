@@ -1,10 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PinDialog } from '../pin-dialog';
 
+const mockChangePinMutate = vi.hoisted(() => vi.fn());
+
 vi.mock('@/entities/card/queries', () => ({
-	useChangeCardPin: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useChangeCardPin: vi.fn(() => ({ mutate: mockChangePinMutate, isPending: false })),
+	useCardPin: vi.fn(() => ({ data: { pin: '1234' }, isFetching: false })),
 }));
 
 vi.mock('@/shared/ui/dialog', () => ({
@@ -42,13 +45,16 @@ function renderPinDialog() {
 	return render(
 		<PinDialog
 			cardId="card_1"
-			pin="1234"
 			trigger={<button type="button">Open PIN</button>}
 		/>,
 	);
 }
 
 describe('PinDialog', () => {
+	beforeEach(() => {
+		mockChangePinMutate.mockClear();
+	});
+
 	it('renders trigger button', () => {
 		renderPinDialog();
 		expect(screen.getByText('Open PIN')).toBeInTheDocument();
@@ -117,5 +123,36 @@ describe('PinDialog', () => {
 		await userEvent.click(screen.getByText('Open PIN'));
 		const submitBtn = screen.getByText('cards.pin_submit').closest('button');
 		expect(submitBtn).toBeDisabled();
+	});
+
+	it('calls changePin.mutate with new PIN when save is clicked', async () => {
+		renderPinDialog();
+		await userEvent.click(screen.getByText('Open PIN'));
+
+		const otpInput = screen.getByLabelText('OTP input');
+		await userEvent.type(otpInput, '5678');
+
+		await userEvent.click(screen.getByText('cards.pin_submit'));
+
+		expect(mockChangePinMutate).toHaveBeenCalledWith(
+			{ id: 'card_1', dto: { pin: '5678' } },
+			expect.any(Object),
+		);
+	});
+
+	it('closes dialog on successful pin change', async () => {
+		renderPinDialog();
+		await userEvent.click(screen.getByText('Open PIN'));
+
+		const otpInput = screen.getByLabelText('OTP input');
+		await userEvent.type(otpInput, '5678');
+		await userEvent.click(screen.getByText('cards.pin_submit'));
+
+		const [, callbacks] = mockChangePinMutate.mock.calls[0];
+		await act(async () => {
+			callbacks.onSuccess();
+		});
+
+		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 	});
 });

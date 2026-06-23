@@ -7,12 +7,16 @@ import {
 	createCard,
 	getCard,
 	getCards,
+	getCardPin,
+	revealCard,
 	updateCardStatus,
 } from '@/shared/api/cards';
 
 export const cardKeys = {
 	all: ['cards'] as const,
 	detail: (id: string) => ['cards', id] as const,
+	reveal: (id: string) => ['cards', id, 'reveal'] as const,
+	pin: (id: string) => ['cards', id, 'pin'] as const,
 };
 
 export function useCards() {
@@ -51,6 +55,24 @@ export function useUpdateCardStatus() {
 			queryClient.invalidateQueries({ queryKey: cardKeys.all });
 			queryClient.invalidateQueries({ queryKey: cardKeys.detail(card.id) });
 		},
+	});
+}
+
+export function useRevealCard(id: string, enabled: boolean) {
+	return useQuery({
+		queryKey: cardKeys.reveal(id),
+		queryFn: () => revealCard(id),
+		enabled: !!id && enabled,
+		gcTime: 0,
+	});
+}
+
+export function useCardPin(id: string, enabled: boolean) {
+	return useQuery({
+		queryKey: cardKeys.pin(id),
+		queryFn: () => getCardPin(id),
+		enabled: !!id && enabled,
+		gcTime: 0,
 	});
 }
 

@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCard } from '@/entities/card/queries';
 import { CardDetail } from '../index';
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+
+const mockUpdateCardStatusMutate = vi.hoisted(() => vi.fn());
 
 const mockCard = {
 	id: 'card_1',
@@ -24,7 +30,8 @@ const mockCard = {
 
 vi.mock('@/entities/card/queries', () => ({
 	useCard: vi.fn(() => ({ data: mockCard, isLoading: false, isError: false })),
-	useUpdateCardStatus: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useUpdateCardStatus: vi.fn(() => ({ mutate: mockUpdateCardStatusMutate, isPending: false })),
+	useRevealCard: vi.fn(() => ({ data: undefined, isFetching: false })),
 }));
 
 vi.mock('@/features/balance-visibility/model', () => ({
@@ -45,7 +52,25 @@ vi.mock('@/widgets/card-detail/pin-dialog', () => ({
 }));
 
 vi.mock('@/shared/ui/confirm-dialog', () => ({
-	ConfirmDialog: () => null,
+	ConfirmDialog: ({
+		open,
+		onConfirm,
+		onClose,
+	}: {
+		open: boolean;
+		onConfirm: () => void;
+		onClose: () => void;
+	}) =>
+		open ? (
+			<div role="dialog">
+				<button type="button" onClick={onConfirm}>
+					ConfirmAction
+				</button>
+				<button type="button" onClick={onClose}>
+					CloseDialog
+				</button>
+			</div>
+		) : null,
 }));
 
 function renderCardDetail() {
@@ -57,6 +82,10 @@ function renderCardDetail() {
 }
 
 describe('CardDetail', () => {
+	beforeEach(() => {
+		mockUpdateCardStatusMutate.mockClear();
+	});
+
 	it('renders card name', () => {
 		renderCardDetail();
 		expect(screen.getByText('My Debit Card')).toBeInTheDocument();
@@ -136,8 +165,6 @@ describe('CardDetail', () => {
 
 	it('shows masked card number when card info is hidden', () => {
 		renderCardDetail();
-		// Default cardInfoVisible=false: card face shows "•••• •••• •••• 1234"
-		// card.cardNumber "**** **** **** 1234" is also visible — both contain 1234
 		expect(screen.getAllByText(/1234/).length).toBeGreaterThan(0);
 	});
 
@@ -153,7 +180,90 @@ describe('CardDetail', () => {
 			isError: false,
 		} as ReturnType<typeof useCard>);
 		renderCardDetail();
-		// text is "cards.available_credit: 80 000,00 ₽" — use regex for partial match
 		expect(screen.getByText(/cards\.available_credit/)).toBeInTheDocument();
+	});
+
+	it('clicking eye button toggles card visibility state', async () => {
+		renderCardDetail();
+		const eyeBtn = screen.getByLabelText('Show card info');
+		await userEvent.click(eyeBtn);
+		// cardInfoVisible becomes true but revealed is undefined → showData stays false
+		// button stays with same aria-label since showData is false
+		expect(screen.getByLabelText('Show card info')).toBeInTheDocument();
+	});
+
+	it('shows confirm dialog when lock card button is clicked', async () => {
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.lock_card'));
+		expect(screen.getByRole('dialog')).toBeInTheDocument();
+	});
+
+	it('closes confirm dialog when CloseDialog is clicked', async () => {
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.lock_card'));
+		expect(screen.getByRole('dialog')).toBeInTheDocument();
+		await userEvent.click(screen.getByText('CloseDialog'));
+		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+	});
+
+	it('calls updateStatus.mutate with Locked on lock confirm', async () => {
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.lock_card'));
+		await userEvent.click(screen.getByText('ConfirmAction'));
+		expect(mockUpdateCardStatusMutate).toHaveBeenCalledWith(
+			{ id: 'card_1', dto: { status: 'Locked' } },
+			expect.any(Object),
+		);
+	});
+
+	it('shows success toast after locking card', async () => {
+		vi.mocked(toast.success).mockClear();
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.lock_card'));
+		await userEvent.click(screen.getByText('ConfirmAction'));
+		const [, callbacks] = mockUpdateCardStatusMutate.mock.calls[0];
+		callbacks.onSuccess();
+		expect(vi.mocked(toast.success)).toHaveBeenCalledWith('cards.lock_card_toast');
+	});
+
+	it('shows confirm dialog when cancel card button is clicked', async () => {
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.cancel_card'));
+		expect(screen.getByRole('dialog')).toBeInTheDocument();
+	});
+
+	it('calls updateStatus.mutate with Closed on cancel confirm', async () => {
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.cancel_card'));
+		await userEvent.click(screen.getByText('ConfirmAction'));
+		expect(mockUpdateCardStatusMutate).toHaveBeenCalledWith(
+			{ id: 'card_1', dto: { status: 'Closed' } },
+			expect.any(Object),
+		);
+	});
+
+	it('shows error toast when updateStatus fails', async () => {
+		vi.mocked(toast.error).mockClear();
+		renderCardDetail();
+		await userEvent.click(screen.getByText('cards.lock_card'));
+		await userEvent.click(screen.getByText('ConfirmAction'));
+		const [, callbacks] = mockUpdateCardStatusMutate.mock.calls[0];
+		callbacks.onError();
+		expect(vi.mocked(toast.error)).toHaveBeenCalledWith('cards.action_error');
+	});
+
+	it('shows credit limit card for credit card', () => {
+		vi.mocked(useCard).mockReturnValueOnce({
+			data: {
+				...mockCard,
+				type: 'Credit',
+				availableCredit: 80000,
+				creditLimit: 100000,
+			},
+			isLoading: false,
+			isError: false,
+		} as ReturnType<typeof useCard>);
+		renderCardDetail();
+		expect(screen.getByText('cards.credit_limit')).toBeInTheDocument();
 	});
 });

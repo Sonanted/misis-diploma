@@ -4,6 +4,7 @@ import {
 	Eye,
 	EyeOff,
 	KeyRound,
+	Loader2,
 	Lock,
 	LockOpen,
 	PlusCircle,
@@ -14,7 +15,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { useCard, useUpdateCardStatus } from '@/entities/card/queries';
+import { useCard, useRevealCard, useUpdateCardStatus } from '@/entities/card/queries';
 import { BalanceToggle } from '@/features/balance-visibility/balance-toggle';
 import { usePrivacyStore } from '@/features/balance-visibility/model';
 import { NotFound } from '@/pages/not-found';
@@ -34,13 +35,17 @@ const CURRENCY_SYMBOLS: Record<EAccountCurrency, string> = {
 };
 
 interface CardFaceProps {
-	card: { fullNumber: string; expiryDate: string; cvv: string; type: string; cardHolder: string };
+	card: { cardNumber: string; expiryDate: string; type: string; cardHolder: string };
+	revealed: { fullNumber: string; cvv: string } | undefined;
+	isRevealing: boolean;
 	visible: boolean;
 	onToggle: () => void;
 }
 
-function CardFace({ card, visible, onToggle }: CardFaceProps) {
+function CardFace({ card, revealed, isRevealing, visible, onToggle }: CardFaceProps) {
 	const { t } = useTranslation();
+	const showData = visible && !!revealed;
+	const lastFour = card.cardNumber.slice(-4);
 	return (
 		<div
 			className="w-full max-w-sm rounded-2xl bg-linear-to-br from-slate-900 to-slate-700 text-white p-4 sm:p-6 flex flex-col justify-between shadow-xl"
@@ -53,16 +58,23 @@ function CardFace({ card, visible, onToggle }: CardFaceProps) {
 					<button
 						type="button"
 						onClick={onToggle}
-						className="opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
-						aria-label={visible ? 'Hide card info' : 'Show card info'}
+						disabled={isRevealing}
+						className="opacity-70 hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-default"
+						aria-label={showData ? 'Hide card info' : 'Show card info'}
 					>
-						{visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+						{isRevealing ? (
+							<Loader2 className="size-4 animate-spin" />
+						) : showData ? (
+							<EyeOff className="size-4" />
+						) : (
+							<Eye className="size-4" />
+						)}
 					</button>
 				</div>
 			</div>
 
 			<p className="text-sm sm:text-base tracking-wider sm:tracking-widest font-mono">
-				{visible ? card.fullNumber : `•••• •••• •••• ${card.fullNumber.slice(-4)}`}
+				{showData ? revealed.fullNumber : `•••• •••• •••• ${lastFour}`}
 			</p>
 
 			<div className="flex justify-between items-end">
@@ -73,12 +85,14 @@ function CardFace({ card, visible, onToggle }: CardFaceProps) {
 				<div className="text-center">
 					<p className="text-[10px] opacity-60 mb-1">EXPIRES</p>
 					<p className="text-xs sm:text-sm font-medium font-mono">
-						{visible ? card.expiryDate : '••/••'}
+						{showData ? card.expiryDate : '••/••'}
 					</p>
 				</div>
 				<div className="text-right">
 					<p className="text-[10px] opacity-60 mb-1">CVV</p>
-					<p className="text-xs sm:text-sm font-medium font-mono">{visible ? card.cvv : '•••'}</p>
+					<p className="text-xs sm:text-sm font-medium font-mono">
+						{showData ? revealed.cvv : '•••'}
+					</p>
 				</div>
 			</div>
 		</div>
@@ -91,10 +105,17 @@ export function CardDetail() {
 	const { id } = useParams<{ id: string }>();
 	const { balanceVisible, toggle } = usePrivacyStore();
 	const [cardInfoVisible, setCardInfoVisible] = useState(false);
+	const [revealEnabled, setRevealEnabled] = useState(false);
 	const [confirmAction, setConfirmAction] = useState<'lock' | 'cancel' | null>(null);
 
 	const { data: card, isLoading, isError } = useCard(id ?? '');
+	const { data: revealed, isFetching: isRevealing } = useRevealCard(id ?? '', revealEnabled);
 	const updateStatus = useUpdateCardStatus();
+
+	const handleCardToggle = () => {
+		if (!revealEnabled) setRevealEnabled(true);
+		setCardInfoVisible((v) => !v);
+	};
 
 	if (isLoading) {
 		return (
@@ -141,8 +162,10 @@ export function CardDetail() {
 				<div className="flex justify-center">
 					<CardFace
 						card={card}
+						revealed={revealed}
+						isRevealing={isRevealing}
 						visible={cardInfoVisible}
-						onToggle={() => setCardInfoVisible((v) => !v)}
+						onToggle={handleCardToggle}
 					/>
 				</div>
 
@@ -208,7 +231,6 @@ export function CardDetail() {
 				</Link>
 				<PinDialog
 					cardId={card.id}
-					pin={card.pin}
 					trigger={
 						<Button variant="outline" className="w-full">
 							<KeyRound className="size-4 mr-2" />

@@ -1,7 +1,16 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
+import { useCreateCard } from '@/entities/card/queries';
 import { CreateCardDialog } from '../create-card-dialog';
+
+vi.mock('sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+const mockCardMutate = vi.fn();
 
 vi.mock('@/entities/account/queries', () => ({
 	useAccounts: vi.fn(() => ({
@@ -25,7 +34,7 @@ vi.mock('@/entities/account/queries', () => ({
 }));
 
 vi.mock('@/entities/card/queries', () => ({
-	useCreateCard: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useCreateCard: vi.fn(() => ({ mutate: mockCardMutate, isPending: false })),
 }));
 
 vi.mock('@/shared/ui/dialog', () => ({
@@ -39,17 +48,65 @@ vi.mock('@/shared/ui/dialog', () => ({
 	DialogTrigger: ({ render }: { render?: ReactNode }) => <div>{render}</div>,
 }));
 
-vi.mock('@/shared/ui/select', () => ({
-	Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-	SelectTrigger: ({ children }: { children: ReactNode }) => (
-		<button type="button">{children}</button>
-	),
-	SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
-	SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-	SelectItem: ({ children, value }: { children: ReactNode; value: string }) => (
-		<div data-value={value}>{children}</div>
-	),
-}));
+vi.mock('@/shared/ui/select', () => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const React = require('react');
+	return {
+		Select: ({
+			children,
+			onValueChange,
+		}: {
+			children: ReactNode;
+			onValueChange?: (v: string) => void;
+		}) =>
+			React.createElement(
+				'div',
+				null,
+				React.Children.map(children, (child: ReactNode) =>
+					React.isValidElement(child)
+						? React.cloneElement(child as React.ReactElement<{ onValueChange?: (v: string) => void }>, {
+								onValueChange,
+							})
+						: child,
+				),
+			),
+		SelectTrigger: ({ children }: { children: ReactNode }) => (
+			<button type="button">{children}</button>
+		),
+		SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+		SelectContent: ({
+			children,
+			onValueChange,
+		}: {
+			children: ReactNode;
+			onValueChange?: (v: string) => void;
+		}) =>
+			React.createElement(
+				'div',
+				null,
+				React.Children.map(children, (child: ReactNode) =>
+					React.isValidElement(child)
+						? React.cloneElement(child as React.ReactElement<{ onValueChange?: (v: string) => void }>, {
+								onValueChange,
+							})
+						: child,
+				),
+			),
+		SelectItem: ({
+			children,
+			value,
+			onValueChange,
+		}: {
+			children: ReactNode;
+			value: string;
+			onValueChange?: (v: string) => void;
+		}) => (
+			<button type="button" data-value={value} onClick={() => onValueChange?.(value)}>
+				{children}
+			</button>
+		),
+	};
+});
 
 describe('CreateCardDialog', () => {
 	it('renders without crashing', () => {
@@ -63,9 +120,14 @@ describe('CreateCardDialog', () => {
 		expect(screen.getAllByText('cards.create')).toHaveLength(2);
 	});
 
-	it('renders custom trigger when provided', () => {
+	it('renders custom React element trigger with onClick injected', () => {
 		render(<CreateCardDialog trigger={<button type="button">Custom Trigger</button>} />);
 		expect(screen.getByText('Custom Trigger')).toBeInTheDocument();
+	});
+
+	it('renders non-element trigger (string) directly without cloning', () => {
+		render(<CreateCardDialog trigger={'Plain text trigger'} />);
+		expect(screen.getByText('Plain text trigger')).toBeInTheDocument();
 	});
 
 	it('renders dialog title', () => {
@@ -103,5 +165,62 @@ describe('CreateCardDialog', () => {
 	it('renders with default account id pre-selected', () => {
 		render(<CreateCardDialog defaultAccountId="acc_1" />);
 		expect(screen.getByText('cards.dialog_title')).toBeInTheDocument();
+	});
+
+	it('calls createCard.mutate when form is submitted with defaultAccountId', async () => {
+		mockCardMutate.mockClear();
+		render(<CreateCardDialog defaultAccountId="acc_1" />);
+
+		await userEvent.type(screen.getByPlaceholderText('cards.name_placeholder'), 'My Card');
+
+		// With defaultAccountId pre-filled, selectedAccount is defined → submit is enabled
+		const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement;
+		await userEvent.click(submitBtn);
+
+		await waitFor(() =>
+			expect(mockCardMutate).toHaveBeenCalledWith(
+				{ name: 'My Card', accountId: 'acc_1' },
+				expect.any(Object),
+			),
+		);
+	});
+
+	it('calls toast.success on createCard success', async () => {
+		mockCardMutate.mockClear();
+		vi.mocked(toast.success).mockClear();
+		render(<CreateCardDialog defaultAccountId="acc_1" />);
+
+		await userEvent.type(screen.getByPlaceholderText('cards.name_placeholder'), 'My Card');
+		const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement;
+		await userEvent.click(submitBtn);
+
+		await waitFor(() => expect(mockCardMutate).toHaveBeenCalled());
+		const [, options] = mockCardMutate.mock.calls[0];
+		options.onSuccess({ name: 'My Card' });
+
+		expect(vi.mocked(toast.success)).toHaveBeenCalled();
+	});
+
+	it('calls toast.error on createCard error', async () => {
+		mockCardMutate.mockClear();
+		vi.mocked(toast.error).mockClear();
+		render(<CreateCardDialog defaultAccountId="acc_1" />);
+
+		await userEvent.type(screen.getByPlaceholderText('cards.name_placeholder'), 'My Card');
+		const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement;
+		await userEvent.click(submitBtn);
+
+		await waitFor(() => expect(mockCardMutate).toHaveBeenCalled());
+		const [, options] = mockCardMutate.mock.calls[0];
+		options.onError(new Error('fail'));
+
+		expect(vi.mocked(toast.error)).toHaveBeenCalledWith('cards.create_error');
+	});
+
+	it('disables submit when isPending', () => {
+		vi.mocked(useCreateCard).mockImplementation(() => ({ mutate: mockCardMutate, isPending: true }));
+		render(<CreateCardDialog defaultAccountId="acc_1" />);
+		const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement;
+		expect(submitBtn).toBeDisabled();
 	});
 });

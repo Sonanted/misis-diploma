@@ -145,4 +145,28 @@ describe('PaymentConfirmDialog', () => {
 		);
 		expect(screen.getByText('payments.sending')).toBeInTheDocument();
 	});
+
+	it('renders conversion info block when conversionInfo is provided', () => {
+		const conversionInfo = {
+			fromCurrency: 'RUB' as const,
+			toCurrency: 'USD' as const,
+			fromAmount: 1000,
+			toAmount: 11.5,
+			updatedAt: '2024-01-15T10:00:00.000Z',
+		};
+		render(
+			<PaymentConfirmDialog
+				open={true}
+				data={defaultData}
+				accounts={mockAccounts}
+				conversionInfo={conversionInfo}
+				isPending={false}
+				onClose={vi.fn()}
+				onConfirm={vi.fn()}
+			/>,
+		);
+		expect(screen.getByText('payments.conversion_title')).toBeInTheDocument();
+		// rateLabel: 11.5 / 1000 = 0.0115 → "1 RUB = 0.0115 USD"
+		expect(screen.getByText(/1 RUB = 0\.0115 USD/)).toBeInTheDocument();
+	});
 });

@@ -9,13 +9,17 @@ vi.mock('@/shared/api/cards', () => ({
 	createCard: vi.fn(() => Promise.resolve({ id: 'card_new' })),
 	updateCardStatus: vi.fn(() => Promise.resolve({ id: 'card_1' })),
 	changeCardPin: vi.fn(() => Promise.resolve(undefined)),
+	revealCard: vi.fn(() => Promise.resolve({ fullNumber: '4111111111111234', cvv: '123' })),
+	getCardPin: vi.fn(() => Promise.resolve({ pin: '1234' })),
 }));
 
 import {
 	useCard,
+	useCardPin,
 	useCards,
 	useChangeCardPin,
 	useCreateCard,
+	useRevealCard,
 	useUpdateCardStatus,
 } from '../queries';
 
@@ -62,5 +66,40 @@ describe('card queries', () => {
 		const { result } = renderHook(() => useChangeCardPin(), { wrapper: createWrapper() });
 		result.current.mutate({ id: 'card_1', dto: { pin: '4321' } });
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
+	});
+
+	it('useRevealCard returns data when enabled', async () => {
+		const { result } = renderHook(() => useRevealCard('card_1', true), {
+			wrapper: createWrapper(),
+		});
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
+		expect(result.current.data).toEqual({ fullNumber: '4111111111111234', cvv: '123' });
+	});
+
+	it('useRevealCard is disabled when enabled=false', () => {
+		const { result } = renderHook(() => useRevealCard('card_1', false), {
+			wrapper: createWrapper(),
+		});
+		expect(result.current.fetchStatus).toBe('idle');
+	});
+
+	it('useRevealCard is disabled when id is empty', () => {
+		const { result } = renderHook(() => useRevealCard('', true), { wrapper: createWrapper() });
+		expect(result.current.fetchStatus).toBe('idle');
+	});
+
+	it('useCardPin returns data when enabled', async () => {
+		const { result } = renderHook(() => useCardPin('card_1', true), {
+			wrapper: createWrapper(),
+		});
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
+		expect(result.current.data).toEqual({ pin: '1234' });
+	});
+
+	it('useCardPin is disabled when enabled=false', () => {
+		const { result } = renderHook(() => useCardPin('card_1', false), {
+			wrapper: createWrapper(),
+		});
+		expect(result.current.fetchStatus).toBe('idle');
 	});
 });

@@ -5,9 +5,16 @@ import { describe, expect, it, vi } from 'vitest';
 import type { TransactionItem } from '../transaction-list';
 import { TransactionHistory } from '../index';
 
-// Mock TransactionFilter (Calendar/Popover — too heavy for unit tests)
+vi.mock('@/features/balance-visibility/model', () => ({
+	usePrivacyStore: vi.fn(() => ({ balanceVisible: true, toggle: vi.fn() })),
+}));
+
 vi.mock('@/features/transaction-filter', () => ({
-	TransactionFilter: () => <div data-testid="tx-filter" />,
+	TransactionFilter: ({ onReset }: { onReset?: () => void }) => (
+		<div data-testid="tx-filter">
+			<button type="button" onClick={onReset}>Reset Filters</button>
+		</div>
+	),
 }));
 
 const tx = (overrides: Partial<TransactionItem> = {}): TransactionItem => ({
@@ -33,6 +40,12 @@ function renderHistory(props: Partial<Parameters<typeof TransactionHistory>[0]> 
 describe('TransactionHistory (uncontrolled mode)', () => {
 	it('renders without crashing', () => {
 		renderHistory();
+		expect(screen.getByTestId('tx-filter')).toBeInTheDocument();
+	});
+
+	it('resets internal filters when reset is triggered', async () => {
+		renderHistory({ transactions: [tx()] });
+		await userEvent.click(screen.getByText('Reset Filters'));
 		expect(screen.getByTestId('tx-filter')).toBeInTheDocument();
 	});
 

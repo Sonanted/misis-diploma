@@ -151,4 +151,60 @@ describe('operationToTransactionItem', () => {
 			expect(item.amount).toBe(0);
 		});
 	});
+
+	describe('global direction — null when both accounts are external', () => {
+		it('transfer where neither account belongs to user → other direction', () => {
+			const op: ApiOperation = {
+				...baseOp,
+				type: 'transfer',
+				fromAccountId: 'ext1',
+				toAccountId: 'ext2',
+			};
+			const item = operationToTransactionItem(op, t, userAccounts);
+			expect(item.type).toBe('other');
+			expect(item.amount).toBe(500);
+		});
+	});
+
+	describe('resolveCurrency with accountCurrencyMap', () => {
+		const currencyMap = new Map([
+			['acc1', 'RUB'],
+			['acc2', 'USD'],
+		]);
+
+		it('topup uses toAccountId from map', () => {
+			const item = operationToTransactionItem(baseOp, t, userAccounts, null, currencyMap);
+			expect(item.currency).toBe('RUB');
+		});
+
+		it('monthly_payment uses fromAccountId from map', () => {
+			const op: ApiOperation = { ...baseOp, type: 'monthly_payment', fromAccountId: 'acc1' };
+			const item = operationToTransactionItem(op, t, userAccounts, null, currencyMap);
+			expect(item.currency).toBe('RUB');
+		});
+
+		it('transfer outgoing uses fromAccountId', () => {
+			const op: ApiOperation = { ...baseOp, type: 'transfer', fromAccountId: 'acc1', toAccountId: 'ext' };
+			const item = operationToTransactionItem(op, t, userAccounts, null, currencyMap);
+			expect(item.currency).toBe('RUB');
+		});
+
+		it('transfer internal uses fromAccountId', () => {
+			const op: ApiOperation = { ...baseOp, type: 'transfer', fromAccountId: 'acc1', toAccountId: 'acc2' };
+			const item = operationToTransactionItem(op, t, userAccounts, null, currencyMap);
+			expect(item.currency).toBe('RUB');
+		});
+
+		it('transfer incoming uses toAccountId', () => {
+			const op: ApiOperation = { ...baseOp, type: 'transfer', fromAccountId: 'ext', toAccountId: 'acc2' };
+			const item = operationToTransactionItem(op, t, userAccounts, null, currencyMap);
+			expect(item.currency).toBe('USD');
+		});
+
+		it('card_issued returns undefined currency', () => {
+			const op: ApiOperation = { ...baseOp, type: 'card_issued', amount: null };
+			const item = operationToTransactionItem(op, t, userAccounts, null, currencyMap);
+			expect(item.currency).toBeUndefined();
+		});
+	});
 });

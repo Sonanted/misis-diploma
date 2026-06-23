@@ -26,6 +26,16 @@ export class CardController {
 		return this.cardService.findOne(req, id);
 	}
 
+	@Get(':id/reveal')
+	revealCardData(@Req() req: IAuthRequest, @Param('id') id: string) {
+		return this.cardService.revealCardData(req, id);
+	}
+
+	@Get(':id/pin')
+	revealPin(@Req() req: IAuthRequest, @Param('id') id: string) {
+		return this.cardService.revealPin(req, id);
+	}
+
 	@Post()
 	create(@Req() req: IAuthRequest, @Body() dto: CreateCardDto) {
 		return this.cardService.create(req, dto);

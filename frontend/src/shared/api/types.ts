@@ -46,9 +46,14 @@ export interface ApiCard {
 	linkedAccountName: string;
 }
 
-export interface ApiCardDetail extends ApiCard {
+export type ApiCardDetail = ApiCard;
+
+export interface ApiCardReveal {
 	fullNumber: string;
 	cvv: string;
+}
+
+export interface ApiCardPin {
 	pin: string;
 }
 

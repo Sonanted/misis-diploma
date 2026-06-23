@@ -1,13 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
+import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
 import { useMe } from '@/entities/user/queries';
 import { Settings } from '../index';
 
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockLogout = vi.hoisted(() => vi.fn());
 const mockChangeLang = vi.hoisted(() => vi.fn());
+const mockUpdateMeMutate = vi.hoisted(() => vi.fn());
+const mockChangePasswordMutate = vi.hoisted(() => vi.fn());
 const mockMeData = vi.hoisted(() => ({
 	firstName: 'John',
 	lastName: 'Doe',
@@ -21,8 +26,8 @@ vi.mock('@/entities/user/queries', () => ({
 		data: mockMeData,
 		isLoading: false,
 	})),
-	useUpdateMe: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-	useChangePassword: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useUpdateMe: vi.fn(() => ({ mutate: mockUpdateMeMutate, isPending: false })),
+	useChangePassword: vi.fn(() => ({ mutate: mockChangePasswordMutate, isPending: false })),
 	useLogout: vi.fn(() => ({ mutate: mockLogout, isPending: false })),
 }));
 
@@ -149,5 +154,133 @@ describe('Settings', () => {
 	it('renders password hint', () => {
 		renderSettings();
 		expect(screen.getByText('settings.password_hint')).toBeInTheDocument();
+	});
+
+	it('calls updateMe.mutate when personal info form is saved', async () => {
+		mockUpdateMeMutate.mockClear();
+		renderSettings();
+		await userEvent.click(screen.getByText('settings.save'));
+		expect(mockUpdateMeMutate).toHaveBeenCalled();
+	});
+
+	it('shows success toast after personal info save', async () => {
+		mockUpdateMeMutate.mockClear();
+		vi.mocked(toast.success).mockClear();
+		renderSettings();
+		await userEvent.click(screen.getByText('settings.save'));
+		expect(mockUpdateMeMutate).toHaveBeenCalled();
+		const [, { onSuccess }] = mockUpdateMeMutate.mock.calls[0];
+		onSuccess();
+		expect(vi.mocked(toast.success)).toHaveBeenCalledWith('settings.toast_personal_saved');
+	});
+
+	it('shows toast error when handlePersonalInfoError receives non-axios error', async () => {
+		mockUpdateMeMutate.mockClear();
+		vi.mocked(toast.error).mockClear();
+		renderSettings();
+		await userEvent.click(screen.getByText('settings.save'));
+		expect(mockUpdateMeMutate).toHaveBeenCalled();
+		const [, { onError }] = mockUpdateMeMutate.mock.calls[0];
+		onError(new Error('Network error'));
+		expect(vi.mocked(toast.error)).toHaveBeenCalledWith('settings.toast_error');
+	});
+
+	it('sets email field error when axios error returns email field error', async () => {
+		mockUpdateMeMutate.mockClear();
+		renderSettings();
+		await userEvent.click(screen.getByText('settings.save'));
+		expect(mockUpdateMeMutate).toHaveBeenCalled();
+		const [, { onError }] = mockUpdateMeMutate.mock.calls[0];
+		const axiosError = Object.assign(new Error(), {
+			isAxiosError: true,
+			response: { data: { message: { errors: { email: 'Email already taken' } } } },
+		});
+		onError(axiosError);
+		expect(await screen.findByText('Email already taken')).toBeInTheDocument();
+	});
+
+	it('shows toast error when axios error has no field errors', async () => {
+		mockUpdateMeMutate.mockClear();
+		vi.mocked(toast.error).mockClear();
+		renderSettings();
+		await userEvent.click(screen.getByText('settings.save'));
+		expect(mockUpdateMeMutate).toHaveBeenCalled();
+		const [, { onError }] = mockUpdateMeMutate.mock.calls[0];
+		const axiosError = Object.assign(new Error(), {
+			isAxiosError: true,
+			response: { data: { message: 'Something went wrong' } },
+		});
+		onError(axiosError);
+		expect(vi.mocked(toast.error)).toHaveBeenCalledWith('settings.toast_error');
+	});
+
+	it('calls changePassword.mutate with matching passwords', async () => {
+		mockChangePasswordMutate.mockClear();
+		renderSettings();
+		const [currentPwd, newPwd, confirmPwd] = Array.from(
+			document.querySelectorAll('input[type="password"]'),
+		) as HTMLInputElement[];
+		await userEvent.type(currentPwd, 'OldPass123');
+		await userEvent.type(newPwd, 'NewPass456!');
+		await userEvent.type(confirmPwd, 'NewPass456!');
+		await userEvent.click(screen.getByText('settings.update_password'));
+		expect(mockChangePasswordMutate).toHaveBeenCalledWith(
+			{ currentPassword: 'OldPass123', newPassword: 'NewPass456!' },
+			expect.any(Object),
+		);
+	});
+
+	it('shows success toast after password change', async () => {
+		mockChangePasswordMutate.mockClear();
+		vi.mocked(toast.success).mockClear();
+		renderSettings();
+		const [currentPwd, newPwd, confirmPwd] = Array.from(
+			document.querySelectorAll('input[type="password"]'),
+		) as HTMLInputElement[];
+		await userEvent.type(currentPwd, 'OldPass123');
+		await userEvent.type(newPwd, 'NewPass456!');
+		await userEvent.type(confirmPwd, 'NewPass456!');
+		await userEvent.click(screen.getByText('settings.update_password'));
+		expect(mockChangePasswordMutate).toHaveBeenCalled();
+		const [, { onSuccess }] = mockChangePasswordMutate.mock.calls[0];
+		onSuccess();
+		expect(vi.mocked(toast.success)).toHaveBeenCalledWith('settings.toast_password_saved');
+	});
+
+	it('sets currentPassword error on 401 changePassword error', async () => {
+		mockChangePasswordMutate.mockClear();
+		renderSettings();
+		const [currentPwd, newPwd, confirmPwd] = Array.from(
+			document.querySelectorAll('input[type="password"]'),
+		) as HTMLInputElement[];
+		await userEvent.type(currentPwd, 'OldPass123');
+		await userEvent.type(newPwd, 'NewPass456!');
+		await userEvent.type(confirmPwd, 'NewPass456!');
+		await userEvent.click(screen.getByText('settings.update_password'));
+		expect(mockChangePasswordMutate).toHaveBeenCalled();
+		const [, { onError }] = mockChangePasswordMutate.mock.calls[0];
+		const axiosError = Object.assign(new Error('Unauthorized'), {
+			isAxiosError: true,
+			response: { status: 401, data: { message: 'Wrong password' } },
+		});
+		onError(axiosError);
+		expect(await screen.findByText('Wrong password')).toBeInTheDocument();
+	});
+
+	it('shows toast error on non-401 changePassword error', async () => {
+		mockChangePasswordMutate.mockClear();
+		vi.mocked(toast.error).mockClear();
+		renderSettings();
+		const [currentPwd, newPwd, confirmPwd] = Array.from(
+			document.querySelectorAll('input[type="password"]'),
+		) as HTMLInputElement[];
+		await userEvent.type(currentPwd, 'OldPass123');
+		await userEvent.type(newPwd, 'NewPass456!');
+		await userEvent.type(confirmPwd, 'NewPass456!');
+		await userEvent.click(screen.getByText('settings.update_password'));
+		expect(mockChangePasswordMutate).toHaveBeenCalled();
+		const [, { onError }] = mockChangePasswordMutate.mock.calls[0];
+		onError(new Error('Generic error'));
+		expect(vi.mocked(toast.error)).toHaveBeenCalledWith('settings.toast_error');
 	});
 });

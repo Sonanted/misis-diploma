@@ -1,9 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NewPayment } from '../index';
+
+const mockTransferMutate = vi.hoisted(() => vi.fn());
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 vi.mock('@/entities/account/queries', () => ({
 	useAccounts: vi.fn(() => ({
@@ -22,25 +27,95 @@ vi.mock('@/entities/account/queries', () => ({
 }));
 
 vi.mock('@/entities/transfer/queries', () => ({
-	useTransfer: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useTransfer: vi.fn(() => ({ mutate: mockTransferMutate, isPending: false })),
 }));
 
-vi.mock('@/shared/ui/select', () => ({
-	Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-	SelectTrigger: ({ children }: { children: ReactNode }) => (
-		<button type="button">{children}</button>
-	),
-	SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
-	SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-	SelectItem: ({ children, value }: { children: ReactNode; value: string }) => (
-		<div data-value={value}>{children}</div>
-	),
+vi.mock('@/shared/api/transfers', () => ({
+	resolveDestinationCurrency: vi.fn().mockResolvedValue({ toCurrency: 'RUB' }),
 }));
+
+vi.mock('@/shared/api/currency-rates', () => ({
+	getCurrencyRates: vi.fn().mockResolvedValue({
+		rates: { RUB: 1, USD: 0.011, EUR: 0.01 },
+		updatedAt: '2024-01-15T10:00:00Z',
+	}),
+}));
+
+vi.mock('@/shared/ui/select', () => {
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const React = require('react');
+	return {
+		Select: ({
+			children,
+			onValueChange,
+		}: {
+			children: ReactNode;
+			onValueChange?: (v: string) => void;
+		}) =>
+			React.createElement(
+				'div',
+				null,
+				React.Children.map(children, (child: ReactNode) =>
+					React.isValidElement(child)
+						? React.cloneElement(
+								child as React.ReactElement<{ onValueChange?: (v: string) => void }>,
+								{ onValueChange },
+							)
+						: child,
+				),
+			),
+		SelectTrigger: ({ children }: { children: ReactNode }) => (
+			<button type="button">{children}</button>
+		),
+		SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+		SelectContent: ({
+			children,
+			onValueChange,
+		}: {
+			children: ReactNode;
+			onValueChange?: (v: string) => void;
+		}) =>
+			React.createElement(
+				'div',
+				null,
+				React.Children.map(children, (child: ReactNode) =>
+					React.isValidElement(child)
+						? React.cloneElement(
+								child as React.ReactElement<{ onValueChange?: (v: string) => void }>,
+								{ onValueChange },
+							)
+						: child,
+				),
+			),
+		SelectItem: ({
+			children,
+			value,
+			onValueChange,
+		}: {
+			children: ReactNode;
+			value: string;
+			onValueChange?: (v: string) => void;
+		}) => (
+			<button type="button" data-value={value} onClick={() => onValueChange?.(value)}>
+				{children}
+			</button>
+		),
+	};
+});
 
 vi.mock('@/widgets/payment-form/payment-confirm-dialog', () => ({
-	PaymentConfirmDialog: ({ onClose }: { onClose: () => void }) => (
+	PaymentConfirmDialog: ({
+		onClose,
+		onConfirm,
+	}: {
+		onClose: () => void;
+		onConfirm: () => void;
+	}) => (
 		<div>
 			<span>PaymentConfirmDialog</span>
+			<button type="button" onClick={onConfirm}>
+				ConfirmPayment
+			</button>
 			<button type="button" onClick={onClose}>
 				Close
 			</button>
@@ -57,6 +132,10 @@ function renderNewPayment() {
 }
 
 describe('NewPayment', () => {
+	beforeEach(() => {
+		mockTransferMutate.mockClear();
+	});
+
 	it('renders page title', () => {
 		renderNewPayment();
 		expect(screen.getByText('payments.title')).toBeInTheDocument();
@@ -126,5 +205,102 @@ describe('NewPayment', () => {
 		expect(screen.getByText('payments.pay_by_account')).toBeInTheDocument();
 		await userEvent.click(screen.getByText('payments.method_phone'));
 		expect(screen.getByText('payments.pay_by_phone')).toBeInTheDocument();
+	});
+
+	it('shows PaymentConfirmDialog after valid form submit', async () => {
+		renderNewPayment();
+		await userEvent.click(screen.getByText('payments.method_account'));
+
+		// Select the from-account
+		await userEvent.click(screen.getByText(/Main Account/));
+
+		const recipientInput = screen.getByPlaceholderText('payments.account_placeholder');
+		const amountInput = screen.getByPlaceholderText('0.00');
+
+		await userEvent.type(recipientInput, '98765432109876543210');
+		await userEvent.type(amountInput, '100');
+
+		await userEvent.click(screen.getByText('payments.send'));
+
+		await waitFor(() => {
+			expect(screen.getByText('PaymentConfirmDialog')).toBeInTheDocument();
+		});
+	});
+
+	it('calls transfer.mutate when confirm button is clicked', async () => {
+		renderNewPayment();
+		await userEvent.click(screen.getByText('payments.method_account'));
+		await userEvent.click(screen.getByText(/Main Account/));
+
+		const recipientInput = screen.getByPlaceholderText('payments.account_placeholder');
+		const amountInput = screen.getByPlaceholderText('0.00');
+
+		await userEvent.type(recipientInput, '98765432109876543210');
+		await userEvent.type(amountInput, '100');
+
+		await userEvent.click(screen.getByText('payments.send'));
+
+		await waitFor(() => screen.getByText('PaymentConfirmDialog'));
+		await userEvent.click(screen.getByText('ConfirmPayment'));
+
+		expect(mockTransferMutate).toHaveBeenCalled();
+	});
+
+	it('shows success toast and resets after successful transfer', async () => {
+		vi.mocked(toast.success).mockClear();
+
+		renderNewPayment();
+		await userEvent.click(screen.getByText('payments.method_account'));
+		await userEvent.click(screen.getByText(/Main Account/));
+
+		await userEvent.type(screen.getByPlaceholderText('payments.account_placeholder'), '12345');
+		await userEvent.type(screen.getByPlaceholderText('0.00'), '50');
+
+		await userEvent.click(screen.getByText('payments.send'));
+		await waitFor(() => screen.getByText('PaymentConfirmDialog'));
+		await userEvent.click(screen.getByText('ConfirmPayment'));
+
+		const [, callbacks] = mockTransferMutate.mock.calls[0];
+		await act(async () => {
+			callbacks.onSuccess();
+		});
+
+		expect(vi.mocked(toast.success)).toHaveBeenCalledWith('payments.toast_success');
+		expect(screen.queryByText('PaymentConfirmDialog')).not.toBeInTheDocument();
+	});
+
+	it('shows error toast on transfer failure', async () => {
+		vi.mocked(toast.error).mockClear();
+
+		renderNewPayment();
+		await userEvent.click(screen.getByText('payments.method_account'));
+		await userEvent.click(screen.getByText(/Main Account/));
+
+		await userEvent.type(screen.getByPlaceholderText('payments.account_placeholder'), '12345');
+		await userEvent.type(screen.getByPlaceholderText('0.00'), '50');
+
+		await userEvent.click(screen.getByText('payments.send'));
+		await waitFor(() => screen.getByText('PaymentConfirmDialog'));
+		await userEvent.click(screen.getByText('ConfirmPayment'));
+
+		const [, callbacks] = mockTransferMutate.mock.calls[0];
+		callbacks.onError(new Error('Network error'));
+
+		expect(vi.mocked(toast.error)).toHaveBeenCalledWith('payments.toast_error');
+	});
+
+	it('closing confirm dialog hides it', async () => {
+		renderNewPayment();
+		await userEvent.click(screen.getByText('payments.method_account'));
+		await userEvent.click(screen.getByText(/Main Account/));
+
+		await userEvent.type(screen.getByPlaceholderText('payments.account_placeholder'), '12345');
+		await userEvent.type(screen.getByPlaceholderText('0.00'), '50');
+
+		await userEvent.click(screen.getByText('payments.send'));
+		await waitFor(() => screen.getByText('PaymentConfirmDialog'));
+		await userEvent.click(screen.getByText('Close'));
+
+		expect(screen.queryByText('PaymentConfirmDialog')).not.toBeInTheDocument();
 	});
 });

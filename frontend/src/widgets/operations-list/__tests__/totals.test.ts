@@ -53,4 +53,19 @@ describe('calculateTotals', () => {
 		expect(income).toBe(200);
 		expect(expenses).toBe(-100);
 	});
+
+	it('treats items with undefined type as financial (not neutral)', () => {
+		const itemUndefinedType = {
+			id: 'y',
+			date: '2024-01-01',
+			description: 'test',
+			amount: 75,
+			type: undefined as unknown as string,
+			typeLabel: '',
+			fromAccountNumber: null,
+			toAccountNumber: null,
+		};
+		const { income } = calculateTotals([itemUndefinedType]);
+		expect(income).toBe(75);
+	});
 });
