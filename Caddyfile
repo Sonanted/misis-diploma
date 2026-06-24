@@ -1,0 +1,13 @@
+:80 {
+	# Proxy /api/* to backend, stripping the /api prefix
+	handle_path /api/* {
+		reverse_proxy backend:4000
+	}
+
+	# Serve frontend SPA — fallback to index.html for client-side routing
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

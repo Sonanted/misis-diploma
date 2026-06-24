@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.env*
+**/*.log
+backend/coverage
+backend/test
+backend/load-tests
+frontend/test-results.json
+.git
