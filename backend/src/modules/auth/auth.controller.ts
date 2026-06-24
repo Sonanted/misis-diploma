@@ -82,7 +82,7 @@ export class AuthController {
 			sameSite: 'strict',
 			path: '/',
 			maxAge,
-			secure: process.env.NODE_ENV === 'production',
+			secure: process.env.COOKIE_SECURE === 'true',
 		});
 	}
 }
