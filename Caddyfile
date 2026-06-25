@@ -1,4 +1,4 @@
-:80 {
+andrey-nikonenko.duckdns.org {
 	# Proxy /api/* to backend, stripping the /api prefix
 	handle_path /api/* {
 		reverse_proxy backend:4000
